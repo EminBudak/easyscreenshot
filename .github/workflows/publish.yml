@@ -29,7 +29,7 @@ jobs:
         run: |
           version="$(node -p "require('./package.json').version")"
           test "${GITHUB_REF_NAME#v}" = "$version" || { echo "Release tag $GITHUB_REF_NAME does not match package.json version $version"; exit 1; }
-          for file in .claude-plugin/marketplace.json .codex-plugin/plugin.json; do
+          for file in .claude-plugin/marketplace.json .codex-plugin/plugin.json plugin.json; do
             found="$(node -p "const m = require('./$file'); (m.plugins ? m.plugins[0] : m).version")"
             test "$found" = "$version" || { echo "$file says $found, package.json says $version"; exit 1; }
           done

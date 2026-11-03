@@ -14,11 +14,12 @@ const { parseSizes, normalizeUrl, prepareDir, slugOf, siteName } = require("../s
 
 const CLI = path.resolve(__dirname, "../skills/easyscreenshot/scripts/easyscreenshot.js");
 
-test("the skill folder carries its own version, the same as the package's and both plugins'", () => {
+test("the skill folder carries its own version, the same as the package's and every plugin manifest's", () => {
   const version = require("../skills/easyscreenshot/scripts/lib/version");
   assert.equal(version, require("../package.json").version);
   assert.equal(version, require("../.claude-plugin/marketplace.json").plugins[0].version);
   assert.equal(version, require("../.codex-plugin/plugin.json").version);
+  assert.equal(version, require("../plugin.json").version);
 });
 
 test("the CLI explains itself and refuses a missing address or a bad option", () => {

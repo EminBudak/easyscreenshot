@@ -45,6 +45,13 @@ That covers Claude Code, Codex, Cursor and the other agents the [`skills`](https
 /plugin install easyscreenshot@easyscreenshot
 ```
 
+In GitHub Copilot CLI it takes the same two steps:
+
+```bash
+copilot plugin marketplace add EminBudak/easyscreenshot
+copilot plugin install easyscreenshot@easyscreenshot
+```
+
 Then ask as usual:
 
 > Make Product Hunt gallery images for cal.com
