@@ -1,0 +1,41 @@
+{
+  "name": "easyscreenshot",
+  "version": "0.1.0",
+  "description": "Give it a website and it picks the pages worth showing, hides the cookie banners and chat bubbles, and saves desktop, mobile and full-page screenshots with a manifest your agent can read.",
+  "license": "MIT",
+  "author": "Emin Budak",
+  "homepage": "https://github.com/EminBudak/easyscreenshot#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EminBudak/easyscreenshot.git"
+  },
+  "bugs": "https://github.com/EminBudak/easyscreenshot/issues",
+  "bin": {
+    "easyscreenshot": "skills/easyscreenshot/scripts/easyscreenshot.js"
+  },
+  "main": "skills/easyscreenshot/scripts/lib/shots.js",
+  "files": [
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\""
+  },
+  "keywords": [
+    "screenshot",
+    "screenshots",
+    "website",
+    "full-page",
+    "mobile",
+    "cookie-banner",
+    "agent-skills",
+    "claude-code",
+    "codex",
+    "cursor",
+    "chrome-devtools-protocol"
+  ]
+}

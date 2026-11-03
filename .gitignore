@@ -1,0 +1,4 @@
+node_modules/
+easyscreenshot-*/
+screenshots/
+.DS_Store
