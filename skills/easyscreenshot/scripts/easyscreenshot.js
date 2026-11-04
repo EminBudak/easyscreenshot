@@ -8,6 +8,7 @@ const version = require("./lib/version");
 
 const USAGE = `Usage: easyscreenshot <url> [options]
        easyscreenshot --pwa-check <manifest>
+       easyscreenshot demo <url> [options]
 
 Opens a website the way a browser draws it, picks the pages worth showing
 (home, pricing, features and the like), hides cookie banners, chat bubbles
@@ -42,6 +43,9 @@ phone page at 2x. 1270x760@2 is a Product Hunt gallery image.
 1080x1920, checks them against Chrome's rules for its richer install
 dialog, and writes pwa/manifest-screenshots.json with the entries for them.
 --pwa-check needs no browser; it exits with 1 when something needs fixing.
+
+For a demo video of the site instead, run easyscreenshot demo <url>; see
+easyscreenshot demo --help.
 
 Needs Node 22 or newer and Chrome, Chromium, Edge or Brave. Set CHROME_PATH
 to pick the browser.`;
@@ -136,6 +140,7 @@ function summary({ dir, manifest }) {
 }
 
 async function main() {
+  if (process.argv[2] === "demo") return require("./lib/demo").main(process.argv.slice(3));
   let options;
   try {
     options = parse(process.argv.slice(2));

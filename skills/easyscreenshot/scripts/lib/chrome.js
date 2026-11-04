@@ -122,8 +122,9 @@ function connect(wsUrl) {
 // profile is a temp folder; the user's own home and browser are untouched.
 // Windows in the background keep drawing (the three --disable-*background*
 // flags), so a page waiting its turn is not left half loaded, and colors are
-// written in sRGB whatever the machine's display.
-async function launch({ lang = "" } = {}) {
+// written in sRGB whatever the machine's display. args: more switches for
+// this run (a demo draws its pages at a higher pixel density).
+async function launch({ lang = "", args = [] } = {}) {
   const binary = findChrome();
   if (!binary) {
     throw new Error("No Chrome, Chromium, Edge or Brave found. Install one, or point CHROME_PATH at its binary.");
@@ -149,6 +150,7 @@ async function launch({ lang = "" } = {}) {
       "--use-mock-keychain",
       "--password-store=basic",
       ...(lang ? [`--lang=${lang}`] : []),
+      ...args,
       // Chrome refuses to start as root without it (a container, a CI box).
       ...(process.getuid && process.getuid() === 0 ? ["--no-sandbox"] : []),
       "about:blank",
@@ -283,12 +285,16 @@ async function closeTab(chrome, cdp) {
 // status the page came with.
 async function navigate(cdp, url) {
   let onLoad;
+  let timer;
   const loaded = new Promise((resolve) => cdp.on("Page.loadEventFired", (onLoad = resolve)));
   try {
     const { errorText } = await cdp.send("Page.navigate", { url });
     if (errorText) throw new Error(`Could not open ${url}: ${errorText}`);
-    await Promise.race([loaded, sleep(Math.max(1_000, Math.min(20_000, timeLeft() - 60_000)))]);
+    // The 20 s wait is cleared once the page has loaded: left running, it
+    // kept the process alive that long after the last page.
+    await Promise.race([loaded, new Promise((resolve) => (timer = setTimeout(resolve, Math.max(1_000, Math.min(20_000, timeLeft() - 60_000)))))]);
   } finally {
+    clearTimeout(timer);
     cdp.off("Page.loadEventFired", onLoad);
   }
   let finalUrl = url;
@@ -304,4 +310,4 @@ async function navigate(cdp, url) {
   return { url: finalUrl, status: Number(result && result.value) || 0 };
 }
 
-module.exports = { findChrome, launch, connect, openTab, closeTab, navigate, userAgentFor };
+module.exports = { findChrome, onPath, launch, connect, openTab, closeTab, navigate, userAgentFor };

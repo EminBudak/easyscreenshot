@@ -942,4 +942,4 @@ function dedupeSkipped(list) {
   return out.slice(0, 40);
 }
 
-module.exports = { takeShots, parseSizes, addPwaShots, normalizeUrl, prepareDir, slugOf, siteName, rejectAtOnce, rejectReason, DEVICES, MAX_HEIGHT };
+module.exports = { takeShots, parseSizes, addPwaShots, normalizeUrl, prepareDir, slugOf, siteName, readInfo, readLinks, rejectAtOnce, rejectReason, DEVICES, MAX_HEIGHT };

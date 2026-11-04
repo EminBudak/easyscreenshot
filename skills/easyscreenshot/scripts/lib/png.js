@@ -180,4 +180,4 @@ function pngText(png) {
   return out;
 }
 
-module.exports = { crc32, pngChunk, pngSize, pngRows, joinScreens, tagPng, pngText };
+module.exports = { crc32, pngChunk, pngSize, pngRows, toRgb, joinScreens, tagPng, pngText };

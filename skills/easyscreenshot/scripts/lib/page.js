@@ -394,6 +394,7 @@ module.exports = {
   waitForFonts,
   clearHover,
   resetPictureWait,
+  waitForPictures,
   capture,
   captureScreen,
   watch,

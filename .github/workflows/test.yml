@@ -14,4 +14,6 @@ jobs:
           node-version: 22
       # Ubuntu 24.04 blocks the user namespaces Chrome's sandbox needs.
       - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      # The demo tests encode with ffmpeg; without it they are skipped.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
       - run: npm test

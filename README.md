@@ -1,6 +1,6 @@
 # easyscreenshot
 
-Give it a website. It picks the pages worth showing, hides the cookie banners and chat bubbles, and saves desktop, phone and full-page screenshots your coding agent can use.
+Give it a website. It picks the pages worth showing, hides the cookie banners and chat bubbles, and saves desktop, phone and full-page screenshots your coding agent can use. It can also [record a demo](#record-a-demo) of the site.
 
 ```bash
 npx easyscreenshot@latest linear.app
@@ -30,6 +30,82 @@ easyscreenshot-linear.app/
 - Every heading on a first screen comes with its box in the image's own pixels, and every section of a whole page with where it starts and ends, so a crop or a zoom does not have to guess.
 - Each PNG carries the address it came from, when it was taken and by what, in its own metadata.
 
+## Record a demo
+
+`easyscreenshot demo` records a short video of the site instead: a tour of the pages it would take screenshots of, or the steps you write down.
+
+```bash
+npx easyscreenshot@latest demo cal.com
+```
+
+![A demo easyscreenshot recorded of cal.com](.github/assets/cal-demo.gif)
+
+The page plays in a browser window on a backdrop, with a pointer that moves the way a hand would, smooth scrolling and a zoom on every click. Cookie banners and chat bubbles are hidden as they are for the screenshots, never clicked away.
+
+```
+easyscreenshot-demo-cal.com/
+  demo.mp4     1920x1080, H.264, 30 frames a second
+  demo.gif     the same, small enough for a README (8 MB at most)
+  poster.png   the first page at rest, for the video's cover
+  steps.json   every step with where it starts and ends, in seconds and in frames
+  demo.yaml    the tour as steps, to edit and record again
+```
+
+`steps.json` is there for what goes on top of the video later, such as narration, music, captions or a click sound: each step has its label and its start and end, and a click also has the frame it lands on and the point in the video where it lands.
+
+To record a flow of your own, write it down and pass it with `--steps`:
+
+```yaml
+url: https://acme.com
+steps:
+  - visit: /pricing
+  - wait: 1
+  - scroll: { to: "text=Compare plans" }
+  - click: "text=Start free"
+  - type: ada@example.com
+    into: "input[name=email]"
+  - key: Enter
+  - wait: "text=Check your inbox"
+```
+
+```bash
+npx easyscreenshot@latest demo --steps demo.yaml
+```
+
+| Step | What it does |
+| --- | --- |
+| `visit: /pricing` | opens a page of the site, or any address |
+| `scroll: 800` | scrolls down 800 px, or up with a negative number; also `top`, `bottom`, a target, or `{ to: <target>, duration: 2 }` |
+| `click: <target>` | moves the pointer there and clicks, zoomed in; add `zoom: false` or `zoom: 2` to the step to change that |
+| `type: <text>` | types into the field in focus, or clicks `into: <target>` first |
+| `key: Enter` | presses a key or a combination such as `Meta+K`, and shows it on screen |
+| `hover: <target>` | moves the pointer there and rests |
+| `wait: 1.5` | holds for that many seconds; `wait: <target>` waits until it shows up |
+
+A target is a CSS selector such as `"#signup"`, or the words on it such as `"text=Start free"`. Put a selector that starts with `#` in quotes, or YAML reads it as a comment. A step can also carry a `label`, which steps.json uses, and a `note` for whoever writes the narration. A JSON file of the same shape works too.
+
+The demo needs ffmpeg, the one on your machine (`brew install ffmpeg`, `sudo apt install ffmpeg` or `winget install ffmpeg`). `npx easyscreenshot@latest demo --help` lists every option; these are the main ones:
+
+```
+  --steps <file>      follow the steps in this YAML or JSON file instead of a tour
+  --pages <n>         pages in the tour, the home page included (default: 4, at most 8)
+  --page <path>       take this page in the tour, e.g. --page /pricing
+  --zoom <n>          how far a click zooms in, 1 to 2.5 (default: 1.5); --no-zoom for none
+  --background <bg>   behind the window: a colour, two colours for a gradient, or a picture
+  --no-frame          the page alone, filling the video
+  --fps <n>           frames a second, 24 to 60 (default: 30)
+  --no-gif            skip demo.gif
+```
+
+`--out`, `--theme`, `--lang`, `--hide`, `--reduced-motion`, `--no-clean` and `--json` work as they do for screenshots, and `--timeout` gives a demo 900 seconds by default.
+
+How a demo is made:
+
+1. A tour takes the pages the screenshots would: the home page, then features, pricing and the like, each opened first to check it. On each page it rests on the first screen, scrolls down to a section or two, and goes on to the next page through the link in the site's own menu, or with a crossfade when the menu has none. Pricing comes last.
+2. Every page loads off camera. The recording pauses while the page opens, scrolls through it once so lazy pictures load, hides what floats over it and waits for its fonts and pictures. Then it comes in with a crossfade.
+3. Chrome draws the page at 1.5 pixels per CSS pixel, so a zoomed-in view stays sharp, and streams its screen. A scroll is taken a frame at a time, the page moved to exactly where each frame of the video needs it, so it is even however slowly the machine draws. A page that draws slowly is recorded in slow motion and played back at speed.
+4. The pointer, the zoom, the rings around clicks and the window are not drawn into the page. They are added afterwards from what was recorded, every frame drawn in a second browser window, and ffmpeg encodes the result.
+
 ## Use it with your agent
 
 easyscreenshot ships as an [Agent Skill](https://agentskills.io). Install it once and your agent runs it by itself when it needs a product's real screens:
@@ -55,6 +131,8 @@ copilot plugin install easyscreenshot@easyscreenshot
 Then ask as usual:
 
 > Make Product Hunt gallery images for cal.com
+
+> Record a short demo of cal.com for the README
 
 The skill carries its own script, so it installs nothing else and needs no API key.
 
@@ -159,6 +237,8 @@ It tells you which screenshots a desktop and a phone would show and what to fix.
 - A menu that only exists while the mouse is over it, and links made of buttons with no address, are not seen; the sitemap and `--page` fill in.
 - A consent wall that blurs the page or loads nothing until you agree can not be hidden away.
 - Dark captures use the site's own dark theme. A site without one looks the same in both.
+- A demo takes real time to record: a 30 second tour takes two to four minutes. It has no sound of its own; steps.json gives the times to lay narration or music on.
+- In a demo recorded in slow motion, the page's own animations keep their speed, but ones a script drives may run fast.
 
 ## See also
 
