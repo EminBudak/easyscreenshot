@@ -62,7 +62,7 @@ const HOME = page(
     }).observe(fill);
   </script>`,
   {
-    head: '<meta name="description" content="Acme makes tools for teams."><meta property="og:site_name" content="Acme"><link rel="alternate" hreflang="tr" href="/tr/">',
+    head: '<meta name="description" content="Acme makes tools for teams."><meta property="og:site_name" content="Acme"><link rel="alternate" hreflang="tr" href="/tr/"><link rel="manifest" href="/app.webmanifest">',
     style: `
     header{position:fixed;top:0;left:0;right:0;height:60px;background:rgb(200,0,0);z-index:10}
     header a{color:#fff;margin:0 6px}
@@ -143,6 +143,8 @@ async function fixture() {
         return html(page("Fiyatlar | Acme", '<h1>Fiyatlar</h1><div style="height:1400px"></div><a href="/tr/">Ana sayfa</a>', { lang: "tr" }));
       case "/picture.svg":
         return setTimeout(() => res.writeHead(200, { "Content-Type": "image/svg+xml" }).end('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="rgb(230,120,0)"/></svg>'), 300);
+      case "/app.webmanifest":
+        return res.writeHead(200, { "Content-Type": "application/manifest+json" }).end(JSON.stringify({ name: "Acme", start_url: "/", display: "standalone" }));
       case "/robots.txt":
         return res.end(`User-agent: *\nDisallow: /customers\n\nSitemap: ${origin}/sitemap.xml\n`);
       case "/sitemap.xml":
@@ -280,6 +282,54 @@ test("one page on an iPhone and a custom size, in the dark", { skip: noBrowser, 
     const wide = readPng(path.join(dir, shots["1270x760"].file));
     assert.ok(near(css(wide, 2, 600, 300), [0, 60, 0]), `dark hero: ${css(wide, 2, 600, 300)}`);
     assert.ok(manifest.notes.some((note) => /prefers-color-scheme/.test(note)));
+  } finally {
+    server.close();
+    fs.rmSync(path.dirname(dir), { recursive: true, force: true });
+  }
+});
+
+test("--pwa: screenshots for a web app manifest, cleaned like the rest, and the site's own manifest read", { skip: noBrowser, timeout: 150_000 }, async () => {
+  const { server, origin } = await fixture();
+  const dir = path.join(tempDir(), "shots");
+  try {
+    const { manifest } = await takeShots(origin, { dir, pages: 2, sizes: "desktop", pwa: true, timeLimit: 130_000 });
+    // The run's own files are what they are without --pwa.
+    assert.deepEqual(manifest.sizes.map((s) => s.size), ["desktop"]);
+    for (const p of manifest.pages) assert.deepEqual(p.shots.map((s) => s.size), ["desktop"], p.slug);
+    const { pwa } = manifest;
+    assert.equal(pwa.file, "pwa/manifest-screenshots.json");
+    assert.deepEqual(
+      pwa.screenshots.map((s) => [s.file, s.page, s.src, s.sizes, s.type, s.form_factor]),
+      [
+        ["pwa/screenshots/wide-01.png", 1, "screenshots/wide-01.png", "1920x1080", "image/png", "wide"],
+        ["pwa/screenshots/wide-02.png", 2, "screenshots/wide-02.png", "1920x1080", "image/png", "wide"],
+        ["pwa/screenshots/narrow-01.png", 1, "screenshots/narrow-01.png", "1080x1920", "image/png", "narrow"],
+        ["pwa/screenshots/narrow-02.png", 2, "screenshots/narrow-02.png", "1080x1920", "image/png", "narrow"],
+      ],
+    );
+    assert.equal(pwa.screenshots[0].label, "Tools for teams");
+    assert.deepEqual(pwa.leftOut, []);
+    const written = JSON.parse(fs.readFileSync(path.join(dir, pwa.file), "utf8"));
+    assert.deepEqual(written.screenshots, pwa.screenshots.map(({ file, page, ...entry }) => entry));
+
+    // 1920x1080 from the 2x desktop window: the header stays, the consent
+    // banner and the cookie bar go.
+    const wide = readPng(path.join(dir, "pwa/screenshots/wide-01.png"));
+    assert.deepEqual([wide.width, wide.height], [1920, 1080]);
+    assert.ok(near(css(wide, 1.2, 800, 30), RED), "header kept");
+    assert.ok(near(css(wide, 1.2, 800, 300), GREEN), `consent banner hidden: ${css(wide, 1.2, 800, 300)}`);
+    assert.ok(near(css(wide, 1.2, 200, 880), WHITE), `cookie bar hidden: ${css(wide, 1.2, 200, 880)}`);
+    // The phone, in a window of its own as --sizes has none: its layout.
+    const narrow = readPng(path.join(dir, "pwa/screenshots/narrow-01.png"));
+    assert.deepEqual([narrow.width, narrow.height], [1080, 1920]);
+    assert.ok(near(css(narrow, 3, 180, 300), [250, 220, 0]), `phone layout: ${css(narrow, 3, 180, 300)}`);
+    assert.equal(pngText(fs.readFileSync(path.join(dir, "pwa/screenshots/narrow-01.png"))).Source, `${origin}/`);
+
+    // The site's own manifest, found on the home page and read.
+    assert.equal(pwa.site.manifest, `${origin}/app.webmanifest`);
+    assert.equal(pwa.site.screenshots, 0);
+    assert.match(pwa.note, /lists no screenshots yet\. Put pwa\/screenshots next to it, in \/ on the site/);
+    assert.match(fs.readFileSync(path.join(dir, "SCREENSHOTS.md"), "utf8"), /## Screenshots for a web app manifest[\s\S]*\| pwa\/screenshots\/wide-01\.png \| 1920x1080 \| wide \| 01 home \| Tools for teams \|/);
   } finally {
     server.close();
     fs.rmSync(path.dirname(dir), { recursive: true, force: true });

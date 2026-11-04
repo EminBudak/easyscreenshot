@@ -11,6 +11,8 @@
 //   01-home-mobile.png    the first screen on a phone, 1080x1920
 //   01-home-full.png      the whole page, 1600 wide
 //   02-pricing-…          the same for every page picked
+//   pwa/                  with --pwa, screenshots for a web app manifest
+//                         and the manifest entries for them (see pwa.js)
 //
 // The home page comes first. Its links (and the sitemap, as a fallback) give
 // the other candidates; each one is opened, and kept only when it is a page
@@ -21,10 +23,11 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { launch, openTab, closeTab, navigate } = require("./chrome");
-const { metrics, scrollTo, walk, waitForContent, settle, waitForFonts, clearHover, resetPictureWait, captureScreen, capturePage } = require("./page");
+const { metrics, scrollTo, walk, waitForContent, settle, waitForFonts, clearHover, resetPictureWait, capture, captureScreen, capturePage } = require("./page");
 const { clean } = require("./clean");
 const { homeOf, pageKey, linkUrl, siteOf, fold, kindOf, rankLinks, visitOrder, readSiteIndex, localeOf } = require("./pick");
 const { pngSize, tagPng } = require("./png");
+const { PWA_SHOTS, LOOKED_AT, planPwa, checkManifest } = require("./pwa");
 const { renderSheet } = require("./sheet");
 const { setTimeLimit, timeLeft, sleep } = require("./time");
 const version = require("./version");
@@ -90,6 +93,31 @@ function parseSizes(text) {
   return [...groups.values()];
 }
 
+// --pwa adds a capture for a web app manifest to the windows the run opens
+// anyway when it can: the wide one to a 1600x900 desktop (taken at 1.2x
+// whatever the window's own scale), the narrow one to the 360x640 phone at
+// 3x. Otherwise each gets a window of its own. It is taken before a whole
+// page, which scrolls the page.
+function addPwaShots(groups) {
+  for (const [form, want] of Object.entries(PWA_SHOTS)) {
+    const shot = { size: `pwa-${form}`, full: false, pwa: form, scale: want.scale };
+    const host = groups.find(
+      ({ device }) =>
+        device.width === want.width &&
+        device.height === want.height &&
+        device.mobile === want.mobile &&
+        (!want.mobile || (device.scale === want.scale && device.agent === "android")),
+    );
+    if (!host) {
+      groups.push({ key: shot.size, device: { ...(want.mobile ? DEVICES.mobile : DEVICES.desktop), scale: want.scale }, shots: [shot] });
+      continue;
+    }
+    const whole = host.shots.findIndex((other) => other.full);
+    host.shots.splice(whole < 0 ? host.shots.length : whole, 0, shot);
+  }
+  return groups;
+}
+
 // "acme.com", "www.acme.com/pricing" and "https://acme.com" all mean a web
 // address; anything that is not http(s) is refused.
 function normalizeUrl(raw) {
@@ -107,8 +135,28 @@ function normalizeUrl(raw) {
 }
 
 // Files a run writes, by name: a manifest someone edited cannot point the
-// clean-up outside the folder.
+// clean-up outside the folder. With --pwa, also these in pwa/ and
+// pwa/screenshots/.
 const RUN_FILE = /^(\d{2}-[a-z0-9-]+\.png|sheet\.png|manifest\.json|SCREENSHOTS\.md)$/;
+const PWA_DIR = "pwa";
+const PWA_FILES = [
+  [path.join(PWA_DIR, "screenshots"), /^(wide|narrow)-\d{2}\.png$/],
+  [PWA_DIR, /^manifest-screenshots\.json$/],
+];
+
+function removeRunFiles(dir) {
+  for (const file of fs.readdirSync(dir)) if (RUN_FILE.test(file)) fs.rmSync(path.join(dir, file), { force: true });
+  for (const [sub, name] of PWA_FILES) {
+    const folder = path.join(dir, sub);
+    if (!fs.existsSync(folder)) continue;
+    for (const file of fs.readdirSync(folder)) if (name.test(file)) fs.rmSync(path.join(folder, file), { force: true });
+    try {
+      fs.rmdirSync(folder);
+    } catch {
+      // Not empty: what is left there is not a run's.
+    }
+  }
+}
 
 // The run's folder: created when missing, reused when an earlier
 // easyscreenshot run made it (that run's files are replaced), refused when
@@ -126,13 +174,13 @@ function prepareDir(dir) {
   if (!old || old.version !== 1 || !/^easyscreenshot /.test(String(old.tool || ""))) {
     throw new Error(`${dir} is not empty and holds no earlier easyscreenshot run. Pick another folder with --out.`);
   }
-  for (const file of fs.readdirSync(dir)) if (RUN_FILE.test(file)) fs.rmSync(path.join(dir, file), { force: true });
+  removeRunFiles(dir);
 }
 
 // A failed run leaves nothing half made: its own files go, and so does the
 // folder when this run created it.
 function cleanUp(dir, existed) {
-  for (const file of fs.readdirSync(dir)) if (RUN_FILE.test(file)) fs.rmSync(path.join(dir, file), { force: true });
+  removeRunFiles(dir);
   if (!existed) {
     try {
       fs.rmdirSync(dir);
@@ -202,6 +250,7 @@ const READ_INFO = `(() => {
     siteName: meta('meta[property="og:site_name"]'),
     heading: h1 ? once(h1.innerText.replace(/\\s+/g, " ").trim()).slice(0, 200) : "",
     canonical: (document.querySelector('link[rel="canonical"]') || {}).href || "",
+    manifest: (document.querySelector('link[rel~="manifest" i][href]') || {}).href || "",
     lang: document.documentElement.lang || "",
     text: text.slice(0, 20000),
     scripts: [...document.querySelectorAll("script[src], iframe[src]")].map((el) => el.src).join(" ").slice(0, 20000),
@@ -213,7 +262,7 @@ const READ_INFO = `(() => {
 
 async function readInfo(cdp) {
   const { result } = await cdp.send("Runtime.evaluate", { expression: READ_INFO, returnByValue: true }, 10_000).catch(() => ({ result: {} }));
-  const info = (result && result.value) || { title: "", description: "", siteName: "", heading: "", canonical: "", lang: "", text: "", scripts: "", height: 0, links: 0, alternates: [] };
+  const info = (result && result.value) || { title: "", description: "", siteName: "", heading: "", canonical: "", manifest: "", lang: "", text: "", scripts: "", height: 0, links: 0, alternates: [] };
   const challenge =
     (CHALLENGE_TITLE.test(info.title) && (info.height < 1500 || info.links < 15)) || (CHALLENGE_SRC.test(info.scripts) && info.height < 1200 && info.links < 10);
   return { ...info, challenge, textHash: info.text ? crypto.createHash("sha1").update(info.text).digest("hex") : "" };
@@ -372,7 +421,11 @@ async function visit(chrome, page, group, theme, ctx, { check = null, links = fa
     await scrollTo(tab, 0);
     await sleep(400);
     const shots = [];
+    // One capture of the screen serves every size taken at the device's own
+    // scale: the phone's first screen and the narrow one for a manifest.
+    let screen = null;
     for (const shot of group.shots) {
+      if (shot.pwa && theme !== ctx.pwaTheme) continue;
       if (timeLeft() < 20_000) break;
       const m = await metrics(tab);
       // A phone page wider than the screen (no viewport tag, or content that
@@ -380,13 +433,23 @@ async function visit(chrome, page, group, theme, ctx, { check = null, links = fa
       // is the screen itself, and a whole page is fitted to its width.
       const fit = Math.min(1, group.device.width / m.visualWidth);
       if (!shot.full) {
-        await clearHover(tab, m.width, m.viewportHeight);
-        const data = await captureScreen(tab);
-        const png = Buffer.from(data.data || "", "base64");
+        const scale = shot.scale || group.device.scale;
+        let png;
+        if (scale === group.device.scale) {
+          if (!screen) {
+            await clearHover(tab, m.width, m.viewportHeight);
+            screen = Buffer.from((await captureScreen(tab)).data || "", "base64");
+          }
+          png = screen;
+        } else {
+          // The screen at another scale: 1920x1080 from the 2x desktop.
+          await clearHover(tab, m.width, m.viewportHeight);
+          const data = await capture(tab, 0, m.scrollY, group.device.width, group.device.height, scale / group.device.scale);
+          png = Buffer.from(data.data || "", "base64");
+        }
         if (!pngSize(png)) continue;
-        const scale = group.device.scale * fit;
-        const headings = await evaluate(tab, `${READ_HEADINGS}(${scale})`, []);
-        shots.push({ size: shot.size, full: false, png, scale: group.device.scale, cssWidth: m.width, cssHeight: m.viewportHeight, headings });
+        const headings = await evaluate(tab, `${READ_HEADINGS}(${scale * fit})`, []);
+        shots.push({ size: shot.size, full: false, pwa: shot.pwa, png, scale, cssWidth: m.width, cssHeight: m.viewportHeight, headings });
       } else {
         const whole = await capturePage(tab, { scale: (shot.scale / group.device.scale) * fit, maxHeight: MAX_HEIGHT });
         if (!whole || !pngSize(whole.png)) continue;
@@ -404,6 +467,7 @@ async function visit(chrome, page, group, theme, ctx, { check = null, links = fa
 // unknown error, write" (EDQUOT), which says nothing; this says what.
 function save(dir, file, data) {
   try {
+    fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, file), data);
   } catch (err) {
     const full = err.code === "ENOSPC" || err.code === "EDQUOT" || err.errno === -122;
@@ -414,6 +478,12 @@ function save(dir, file, data) {
 // Writes a visit's captures as files of the page and records them.
 function saveShots(page, result, theme, dir, written) {
   for (const shot of result.shots) {
+    // A capture for a web app manifest waits for the end of the run, when
+    // the ones that go in are picked and numbered.
+    if (shot.pwa) {
+      page.pwa[shot.pwa] = { png: shot.png, headings: shot.headings };
+      continue;
+    }
     const file = `${String(page.n).padStart(2, "0")}-${page.slug}-${shot.size}${theme === "dark" ? "-dark" : ""}.png`;
     const png = tagPng(shot.png, {
       Title: page.title || "",
@@ -433,10 +503,88 @@ function saveShots(page, result, theme, dir, written) {
   if (result.cleaned.unlocked && !page.notes.includes("scroll unlocked")) page.notes.push("scroll unlocked");
 }
 
+// Writes the screenshots for a web app manifest, pwa/screenshots/*.png, and
+// pwa/manifest-screenshots.json, whose src paths hold when the screenshots
+// folder sits next to the manifest.
+function savePwa(kept, dir) {
+  const plan = planPwa(kept.map((page) => ({ n: page.n, slug: page.slug, heading: page.heading, title: page.title, captures: page.pwa })));
+  const out = {
+    file: "",
+    screenshots: [],
+    leftOut: plan.leftOut.map((item) => ({ page: item.page, form_factor: item.form, reason: item.reason })),
+    problems: plan.check.problems,
+    site: null,
+    note: "",
+  };
+  if (!plan.files.length) return out;
+  for (const file of plan.files) {
+    const page = kept.find((other) => other.n === file.page);
+    const png = tagPng(file.png, { Title: page.title || "", Source: page.url, "Creation Time": new Date().toISOString(), Software: `easyscreenshot ${version}` });
+    save(path.join(dir, PWA_DIR, "screenshots"), file.name, png);
+    out.screenshots.push({ file: `${PWA_DIR}/screenshots/${file.name}`, page: file.page, ...file.entry });
+  }
+  save(path.join(dir, PWA_DIR), "manifest-screenshots.json", JSON.stringify({ screenshots: plan.entries }, null, 2) + "\n");
+  out.file = `${PWA_DIR}/manifest-screenshots.json`;
+  return out;
+}
+
+// The site's own manifest, read as --pwa-check reads it: where it is and
+// what Chrome makes of the screenshots it lists already. One sentence on it
+// goes in the summary. added: how many screenshots the run made for it.
+async function checkSite(href, home, added) {
+  if (!href) {
+    return { site: null, note: "The home page links no web app manifest, so Chrome does not offer to install the site yet. The screenshots in pwa/ are ready for when it has one." };
+  }
+  let report;
+  try {
+    report = await checkManifest({ url: href });
+  } catch (err) {
+    return { site: { manifest: href, error: err.message }, note: `The site's manifest could not be checked: ${err.message}` };
+  }
+  const site = { manifest: report.manifest, screenshots: report.screenshots.length, desktop: report.desktop, phone: report.phone, problems: report.problems, tips: report.tips };
+  const folder = new URL(".", report.manifest);
+  const where = folder.origin === new URL(home).origin ? `${folder.pathname} on the site` : folder.href;
+  if (!site.screenshots) {
+    return { site, note: `The site's manifest, ${report.manifest}, lists no screenshots yet. Put pwa/screenshots next to it, in ${where}, and add the entries of pwa/manifest-screenshots.json to it.` };
+  }
+  // Added after the ones there, the new ones could fall past the first 8.
+  const room = site.screenshots + added > LOOKED_AT ? ` Chrome looks at the first ${LOOKED_AT} entries of the list only, so put the new ones before the old ones, or in their place.` : "";
+  return {
+    site,
+    note: `The site's manifest, ${report.manifest}, lists ${site.screenshots === 1 ? "1 screenshot" : `${site.screenshots} screenshots`} already: Chrome shows ${site.desktop.length} on desktops and ${site.phone.length} on phones.${room}`,
+  };
+}
+
+function pwaMarkdown(pwa, pages) {
+  const name = (n) => {
+    const page = pages.find((other) => other.n === n);
+    return page ? `${String(n).padStart(2, "0")} ${page.slug}` : String(n);
+  };
+  const lines = ["## Screenshots for a web app manifest", ""];
+  if (!pwa.file) lines.push("No screenshot for a web app manifest could be taken.", "");
+  else {
+    lines.push(
+      "`pwa/manifest-screenshots.json` lists them as the `screenshots` of a web app manifest, checked against Chrome's rules for its richer install dialog. Put the `pwa/screenshots` folder next to the manifest and add the entries to it. Each label is the main heading on that screen: change it where it does not say what the screen shows.",
+      "",
+      "| File | Size | Form factor | Page | Label |",
+      "| --- | --- | --- | --- | --- |",
+      ...pwa.screenshots.map((shot) => `| ${shot.file} | ${shot.sizes} | ${shot.form_factor} | ${name(shot.page)} | ${shot.label.replace(/\|/g, "\\|")} |`),
+      "",
+    );
+  }
+  if (pwa.leftOut.length) lines.push("Left out:", "", ...pwa.leftOut.map((item) => `- ${name(item.page)}, ${item.form_factor}: ${item.reason}`), "");
+  if (pwa.problems.length) lines.push("Against Chrome's rules:", "", ...pwa.problems.map((text) => `- ${text}`), "");
+  if (pwa.note) lines.push(pwa.note, "");
+  if (pwa.site && pwa.site.problems && pwa.site.problems.length) lines.push("To fix in the site's manifest:", "", ...pwa.site.problems.map((text) => `- ${text}`), "");
+  if (pwa.site && pwa.site.tips && pwa.site.tips.length) lines.push("Worth adding to it:", "", ...pwa.site.tips.map((text) => `- ${text}`), "");
+  return lines;
+}
+
 function describeSizes(groups) {
   const out = [];
   for (const group of groups) {
     for (const shot of group.shots) {
+      if (shot.pwa) continue;
       const scale = shot.full ? shot.scale : group.device.scale;
       out.push({ size: shot.size, width: group.device.width, height: shot.full ? null : group.device.height, scale, device: group.device.agent, full: shot.full });
     }
@@ -475,6 +623,7 @@ function writeMarkdown(manifest, dir) {
     lines.push("");
   }
   if (manifest.sheet) lines.push("## All pages on one picture", "", `- ${manifest.sheet.file} (${manifest.sheet.width}x${manifest.sheet.height})`, "");
+  if (manifest.pwa) lines.push(...pwaMarkdown(manifest.pwa, manifest.pages));
   if (manifest.skipped.length) {
     lines.push("## Left out", "");
     for (const skip of manifest.skipped) lines.push(`- ${skip.url}: ${skip.reason}`);
@@ -500,11 +649,13 @@ async function takeShots(rawUrl, options = {}) {
     hide = [],
     reducedMotion = false,
     clean: tidy = true,
+    pwa = false,
     timeLimit = 300_000,
     log = () => {},
   } = options;
   setTimeLimit(timeLimit);
   const groups = parseSizes(sizes);
+  if (pwa) addPwaShots(groups);
   const themes = theme === "both" ? ["light", "dark"] : [theme === "dark" ? "dark" : "light"];
   const asked = normalizeUrl(rawUrl);
   let home = homeOf(asked);
@@ -518,7 +669,8 @@ async function takeShots(rawUrl, options = {}) {
   const target = dir || `easyscreenshot-${siteOf(asked)}`;
   const existed = fs.existsSync(target);
   prepareDir(target);
-  const ctx = { lang, hide, reducedMotion, clean: tidy };
+  // The screenshots for a manifest are taken in the first theme only.
+  const ctx = { lang, hide, reducedMotion, clean: tidy, pwaTheme: pwa ? themes[0] : "" };
   const notes = [];
   // Pages opened and left out come first in the manifest's list, then the
   // links left out without opening.
@@ -528,6 +680,8 @@ async function takeShots(rawUrl, options = {}) {
   const written = [];
   let leftover = [];
   let name = "";
+  let siteManifest = "";
+  let pwaSaved = null;
   const chrome = await launch({ lang });
   // The other devices and themes of a page kept are taken in windows of
   // their own while the next pages are being found.
@@ -539,6 +693,7 @@ async function takeShots(rawUrl, options = {}) {
       for (const themeName of themes) {
         for (const group of groups) {
           if (group === first && themeName === firstTheme) continue;
+          if (group.shots.every((shot) => shot.pwa && themeName !== ctx.pwaTheme)) continue;
           pool.add(async () => {
             const label = `${group.key}${themeName === "dark" ? " (dark)" : ""}`;
             if (timeLeft() < 30_000) {
@@ -579,7 +734,7 @@ async function takeShots(rawUrl, options = {}) {
       log(`${String(page.n).padStart(2, "0")} ${page.slug}  ${new URL(result.nav.url).pathname}`);
       others(page);
     };
-    const newPage = (url, kind, why) => ({ asked: url, url, kind, why, slug: "", shots: [], notes: [], hidden: 0 });
+    const newPage = (url, kind, why) => ({ asked: url, url, kind, why, slug: "", shots: [], notes: [], hidden: 0, pwa: {} });
 
     // The home page, or only the address given when one page is asked for.
     const startUrl = wanted === 1 ? asked : home;
@@ -607,6 +762,7 @@ async function takeShots(rawUrl, options = {}) {
     }
     const lastVisit = Date.now() - begun;
     name = siteName(result.info, result.nav.url);
+    siteManifest = result.info.manifest || "";
     keep(start, result);
     if (start.kind === "home") start.keys.add(pageKey(home));
 
@@ -682,6 +838,7 @@ async function takeShots(rawUrl, options = {}) {
     if (!kept.some((page) => page.shots.length)) throw new Error("No page could be captured.");
     if (kept.some((page) => page.notes.some((note) => /time ran out/.test(note)))) notes.push("Time ran out before every size was taken; give more with --timeout.");
     if (themes.includes("dark")) notes.push("Dark captures use the page's own dark theme, through prefers-color-scheme. A site without one looks the same in both.");
+    if (pwa) pwaSaved = savePwa(kept, target);
   } catch (err) {
     await pool.drain();
     await chrome.close();
@@ -712,10 +869,14 @@ async function takeShots(rawUrl, options = {}) {
       shots: page.shots,
     })),
     sheet: null,
+    pwa: pwaSaved,
     candidates: leftover,
     skipped: dedupeSkipped([...rejected, ...skipped]),
     notes,
   };
+  // The site's own manifest is read while the sheet is drawn: no browser
+  // needed.
+  const siteCheck = pwaSaved ? checkSite(siteManifest, kept[0].url, pwaSaved.screenshots.length) : null;
   try {
     log("Drawing the sheet");
     // The sheet takes a few seconds and is drawn even when the pages used up
@@ -725,6 +886,7 @@ async function takeShots(rawUrl, options = {}) {
   } finally {
     await chrome.close();
   }
+  if (siteCheck) Object.assign(manifest.pwa, await siteCheck);
   save(target, "manifest.json", JSON.stringify(manifest, null, 2) + "\n");
   writeMarkdown(manifest, target);
   return { dir: target, manifest };
@@ -780,4 +942,4 @@ function dedupeSkipped(list) {
   return out.slice(0, 40);
 }
 
-module.exports = { takeShots, parseSizes, normalizeUrl, prepareDir, slugOf, siteName, rejectAtOnce, rejectReason, DEVICES, MAX_HEIGHT };
+module.exports = { takeShots, parseSizes, addPwaShots, normalizeUrl, prepareDir, slugOf, siteName, rejectAtOnce, rejectReason, DEVICES, MAX_HEIGHT };

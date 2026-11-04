@@ -1,6 +1,6 @@
 ---
 name: easyscreenshot
-description: Take real screenshots of a product's website before you make anything that shows it, such as a launch video, store or Product Hunt images, a deck, a README, a landing page or a social post. Picks the pages worth showing (home, pricing, features and the like), hides cookie banners and chat bubbles, and saves desktop, phone and whole-page PNGs with a manifest. Use it whenever the user asks for screenshots of a site, or for work that needs the product's real screens, and you know its address.
+description: Take real screenshots of a product's website before you make anything that shows it, such as a launch video, store or Product Hunt images, a deck, a README, a landing page, a social post or the screenshots of a web app manifest. Picks the pages worth showing (home, pricing, features and the like), hides cookie banners and chat bubbles, and saves desktop, phone and whole-page PNGs with a manifest. Use it whenever the user asks for screenshots of a site, or for work that needs the product's real screens, and you know its address.
 ---
 
 # easyscreenshot
@@ -18,6 +18,7 @@ node <skill>/scripts/easyscreenshot.js <url> --out screenshots/<name>
 - It takes five pages by default, the home page first. Use `--pages 3` for fewer, and `--page /pricing` (once per page) for pages that must be there.
 - By default each page comes as the desktop's first screen at 3200x1800, the phone's at 1080x1920 and the whole desktop page. `--sizes iphone` gives 1320x2868 for App Store frames, `--sizes 1270x760@2` a Product Hunt gallery image, and `mobile-full` the whole phone page.
 - `--theme dark` (or `both`) takes the site's own dark theme, `--lang tr` its version in another language.
+- `--pwa` also saves screenshots for a web app manifest in `pwa/`: first screens at 1920x1080 and 1080x1920, checked against Chrome's rules for its richer install dialog, with `pwa/manifest-screenshots.json` listing them. `--pwa-check <manifest file, its address or the site's>` checks the screenshots a manifest already has, with no browser.
 
 ## Use them
 
@@ -27,6 +28,7 @@ node <skill>/scripts/easyscreenshot.js <url> --out screenshots/<name>
 4. Headings and sections come with boxes in each image's own pixels (in `manifest.json` and `SCREENSHOTS.md`). Use them to crop or zoom into one part of a page instead of guessing where it is.
 5. Whole-page images are long. To show one part, cut the section you need from it; its `sections` say where each one starts and ends.
 6. When a page you need is missing, run again with `--page <path>`. `manifest.json` lists the other pages it could have taken (`candidates`) and the ones it left out, with the reason (`skipped`).
+7. For a web app manifest, put `pwa/screenshots` next to the app's manifest and add the entries of `pwa/manifest-screenshots.json` to its `screenshots`. Each label is the main heading on that screen: read them, and change any that does not say what the screen shows. Then run `--pwa-check` on the manifest.
 
 ## When it goes wrong
 

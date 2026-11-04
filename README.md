@@ -73,6 +73,9 @@ npx easyscreenshot@latest <url> [options]
   --hide <css>      hide one more element (repeat for more)
   --reduced-motion  ask the site for its reduced-motion version
   --no-clean        take the pages as they come, banners and bubbles included
+  --pwa             also save screenshots for a web app manifest, in pwa/
+  --pwa-check <m>   check the screenshots of a web app manifest instead: give
+                    the manifest's file or address, or the site's address
   --json            print manifest.json instead of a summary
   --timeout <s>     give up after this many seconds (default: 300)
 ```
@@ -99,6 +102,45 @@ npx easyscreenshot@latest yourapp.com --sizes iphone,mobile --theme both --out s
 Installed globally (`npm install -g easyscreenshot`), the command is `easyscreenshot`. npx keeps the copy an earlier run fetched, so `npx easyscreenshot@latest` is how you get a newer version.
 
 It needs Node 22 or newer and Chrome, Chromium, Edge or Brave. Set `CHROME_PATH` to pick the browser. There are no npm dependencies and nothing is downloaded: easyscreenshot drives the browser you already have over the Chrome DevTools Protocol, with a throwaway profile.
+
+## Screenshots for a web app manifest
+
+A PWA whose manifest has no screenshots gets Chrome's plain install dialog, and DevTools warns "Richer PWA Install UI won't be available on desktop". `--pwa` takes the screenshots that dialog shows:
+
+```bash
+npx easyscreenshot@latest yourapp.com --pwa
+```
+
+Next to the usual files you get:
+
+```
+pwa/
+  manifest-screenshots.json   the "screenshots" for your manifest, with src, sizes, type, form_factor and label
+  screenshots/wide-01.png     a page's first screen on a desktop, 1920x1080
+  screenshots/narrow-01.png   the same page on a phone, 1080x1920
+```
+
+Put the `screenshots` folder next to your manifest and add the entries from `manifest-screenshots.json` to it. Each label is the main heading on that screen, so read them and change any that does not say what the screen shows. The run also reads the manifest your home page links and tells you what it is missing.
+
+Every screenshot is checked against Chrome's rules before it goes in:
+
+- JPEG or PNG, each side between 320 and 3840 pixels, the long side at most 2.3 times the short one. A whole page is too long for that.
+- Desktops show the screenshots whose `form_factor` is `wide`, phones show the rest. A side with none gets the plain dialog.
+- Screenshots for the same side share one aspect ratio. Chrome leaves out the ones that do not match the first.
+- Chrome looks at the first 8 entries of the list and no further, wide and narrow together, and DevTools warns past 5 on a phone. So `--pwa` keeps at most 8, 4 wide and 4 narrow when there are enough pages.
+- `sizes` has to be the file's own size. Without it, Chrome shows a copy scaled down to 320 pixels high.
+- A `description` in the manifest is optional. Chrome shows about 300 characters of it above the screenshots.
+
+To check a manifest you already have, give `--pwa-check` its file or address, or your site's address:
+
+```bash
+npx easyscreenshot@latest --pwa-check public/manifest.json
+npx easyscreenshot@latest --pwa-check yourapp.com
+```
+
+It tells you which screenshots a desktop and a phone would show and what to fix. It needs no browser and exits with 1 when something needs fixing, so it can run in CI.
+
+`--pwa` covers the pages anyone can open. Screens behind a sign-in are not reached yet: take those yourself at 1920x1080 and 1080x1920, then run `--pwa-check` on the manifest.
 
 ## How it works
 

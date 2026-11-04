@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 "use strict";
 
-const { takeShots } = require("./lib/shots");
+const fs = require("fs");
+const { takeShots, normalizeUrl } = require("./lib/shots");
+const { checkManifest, describeCheck } = require("./lib/pwa");
 const version = require("./lib/version");
 
 const USAGE = `Usage: easyscreenshot <url> [options]
+       easyscreenshot --pwa-check <manifest>
 
 Opens a website the way a browser draws it, picks the pages worth showing
 (home, pricing, features and the like), hides cookie banners, chat bubbles
@@ -23,6 +26,9 @@ Options:
   --hide <css>      hide one more element (repeat for more)
   --reduced-motion  ask the site for its reduced-motion version
   --no-clean        take the pages as they come, banners and bubbles included
+  --pwa             also save screenshots for a web app manifest, in pwa/
+  --pwa-check <m>   check the screenshots of a web app manifest instead: give
+                    the manifest's file or address, or the site's address
   --json            print manifest.json instead of a summary
   --timeout <s>     give up after this many seconds (default: 300)
   -h, --help        show this help
@@ -32,15 +38,21 @@ Sizes: desktop is 1600x900 at 2x, mobile 360x640 at 3x (1080x1920), iphone
 440x956 at 3x (1320x2868), full the whole page at 1x, mobile-full the whole
 phone page at 2x. 1270x760@2 is a Product Hunt gallery image.
 
+--pwa takes each page's first screen at 1920x1080 and on a phone at
+1080x1920, checks them against Chrome's rules for its richer install
+dialog, and writes pwa/manifest-screenshots.json with the entries for them.
+--pwa-check needs no browser; it exits with 1 when something needs fixing.
+
 Needs Node 22 or newer and Chrome, Chromium, Edge or Brave. Set CHROME_PATH
 to pick the browser.`;
 
 function parse(argv) {
-  const options = { pages: 5, extra: [], hide: [], sizes: "desktop,mobile,full", theme: "light", lang: "", reducedMotion: false, clean: true, json: false, timeout: 300 };
+  const options = { pages: 5, extra: [], hide: [], sizes: "desktop,mobile,full", theme: "light", lang: "", reducedMotion: false, clean: true, pwa: false, pwaCheck: "", json: false, timeout: 300 };
   const rest = [];
-  const VALUED = new Set(["--out", "--pages", "--page", "--sizes", "--theme", "--lang", "--hide", "--timeout"]);
+  const VALUED = new Set(["--out", "--pages", "--page", "--sizes", "--theme", "--lang", "--hide", "--pwa-check", "--timeout"]);
   const set = (name, value) => {
     if (name === "--out") options.out = value;
+    else if (name === "--pwa-check") options.pwaCheck = value;
     else if (name === "--pages") options.pages = Number(value);
     else if (name === "--page") options.extra.push(value);
     else if (name === "--sizes") options.sizes = value;
@@ -58,6 +70,7 @@ function parse(argv) {
     else if (arg === "--json") options.json = true;
     else if (arg === "--no-clean") options.clean = false;
     else if (arg === "--reduced-motion") options.reducedMotion = true;
+    else if (arg === "--pwa") options.pwa = true;
     else if (VALUED.has(name)) {
       const value = name !== arg ? arg.slice(eq + 1) : argv[++i];
       if (value === undefined || value === "" || (name === arg && value.startsWith("--"))) throw new Error(`${name} needs a value`);
@@ -69,8 +82,40 @@ function parse(argv) {
   if (!(options.timeout >= 30 && options.timeout <= 900)) throw new Error("--timeout takes 30 to 900 seconds");
   if (!["light", "dark", "both"].includes(options.theme)) throw new Error("--theme takes light, dark or both");
   if (options.lang && !/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(options.lang)) throw new Error(`--lang takes a language code such as tr or pt-BR, not ${options.lang}`);
-  if (!options.help && !options.version && rest.length !== 1) throw new Error("Give one website address, for example: easyscreenshot acme.com");
+  if (options.pwaCheck && (rest.length || options.pwa)) throw new Error("--pwa-check takes the manifest, or the site's address, as its value and runs on its own, for example: easyscreenshot --pwa-check acme.com");
+  if (!options.help && !options.version && !options.pwaCheck && rest.length !== 1) throw new Error("Give one website address, for example: easyscreenshot acme.com");
   return { ...options, url: rest[0] };
+}
+
+// --pwa-check: a manifest file on this machine, else a web address.
+async function pwaCheck(options) {
+  const target = fs.existsSync(options.pwaCheck) && fs.statSync(options.pwaCheck).isFile() ? { file: options.pwaCheck } : { url: normalizeUrl(options.pwaCheck) };
+  let report;
+  try {
+    report = await checkManifest(target);
+  } catch (err) {
+    if (options.json) process.stdout.write(JSON.stringify({ ok: false, error: err.message }) + "\n");
+    process.stderr.write(`easyscreenshot: ${err.message}\n`);
+    process.exit(1);
+  }
+  process.stdout.write(options.json ? JSON.stringify(report, null, 2) + "\n" : describeCheck(report) + "\n");
+  process.exitCode = report.ok ? 0 : 1;
+}
+
+// The lines a run with --pwa adds to the summary.
+function pwaLines(pwa) {
+  const lines = [];
+  if (pwa.file) {
+    const count = (form) => pwa.screenshots.filter((shot) => shot.form_factor === form).length;
+    lines.push(`  PWA     ${pwa.file}: ${count("wide")} wide at 1920x1080 and ${count("narrow")} narrow at 1080x1920, within Chrome's rules`);
+  } else lines.push("  PWA     no screenshot for a web app manifest could be taken");
+  const left = [...new Set(pwa.leftOut.map((item) => item.reason))];
+  for (const reason of left) {
+    const pages = pwa.leftOut.filter((item) => item.reason === reason).map((item) => `${String(item.page).padStart(2, "0")} ${item.form_factor}`);
+    lines.push(`          left out ${pages.join(", ")}: ${reason}`);
+  }
+  if (pwa.note) lines.push(`          ${pwa.note}${pwa.site && pwa.site.problems && pwa.site.problems.length ? " SCREENSHOTS.md says what to fix in it." : ""}`);
+  return lines;
 }
 
 function summary({ dir, manifest }) {
@@ -82,6 +127,7 @@ function summary({ dir, manifest }) {
     lines.push(`     ${" ".repeat(width)}  ${page.shots.map((shot) => shot.file).join(", ") || "no files"}`);
   }
   if (manifest.sheet) lines.push("", `  Sheet   ${manifest.sheet.file} (${manifest.sheet.width}x${manifest.sheet.height})`);
+  if (manifest.pwa) lines.push(...(manifest.sheet ? [] : [""]), ...pwaLines(manifest.pwa));
   const left = manifest.skipped.slice(0, 6).map((skip) => `${new URL(skip.url).pathname} (${skip.reason})`);
   if (left.length) lines.push(`  Skipped ${left.join(", ")}${manifest.skipped.length > 6 ? ` and ${manifest.skipped.length - 6} more` : ""}`);
   for (const note of manifest.notes) lines.push(`  Note    ${note}`);
@@ -99,6 +145,7 @@ async function main() {
   }
   if (options.help) return void process.stdout.write(`${USAGE}\n`);
   if (options.version) return void process.stdout.write(`${version}\n`);
+  if (options.pwaCheck) return pwaCheck(options);
   try {
     const result = await takeShots(options.url, {
       dir: options.out,
@@ -110,6 +157,7 @@ async function main() {
       hide: options.hide,
       reducedMotion: options.reducedMotion,
       clean: options.clean,
+      pwa: options.pwa,
       timeLimit: options.timeout * 1000,
       log: options.json ? () => {} : (line) => process.stderr.write(`${line}\n`),
     });
