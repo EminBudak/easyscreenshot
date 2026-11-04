@@ -2,12 +2,12 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "easyscreenshot",
   "version": "0.1.0",
-  "description": "Give it a website and it picks the pages worth showing, then saves clean desktop, phone and full-page screenshots your coding agent can use.",
+  "description": "Give it a website and it picks the pages worth showing, then saves clean desktop, phone and full-page screenshots your coding agent can use. It can also record a short demo video of the site.",
   "author": {
     "name": "Emin Budak",
     "url": "https://eminbudak.com"
   },
   "repository": "https://github.com/EminBudak/easyscreenshot",
   "license": "MIT",
-  "keywords": ["screenshot", "website", "launch", "marketing", "design"]
+  "keywords": ["screenshot", "website", "launch", "marketing", "design", "demo", "video"]
 }

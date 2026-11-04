@@ -1,13 +1,13 @@
 {
   "name": "easyscreenshot",
-  "description": "easyscreenshot: give it a website and it picks the pages worth showing and saves clean desktop, mobile and full-page screenshots your coding agent can use.",
+  "description": "easyscreenshot: give it a website and it picks the pages worth showing, saves clean desktop, phone and full-page screenshots your coding agent can use, and records a short demo video of the site.",
   "owner": {
     "name": "Emin Budak"
   },
   "plugins": [
     {
       "name": "easyscreenshot",
-      "description": "Opens a product's website in a headless browser, picks the pages worth showing (home, pricing, features and the like), hides cookie banners and chat bubbles, and saves desktop, mobile and full-page PNGs with manifest.json and SCREENSHOTS.md.",
+      "description": "Opens a product's website in a headless browser, picks the pages worth showing (home, pricing, features and the like), hides cookie banners and chat bubbles, and saves desktop, phone and full-page PNGs with manifest.json and SCREENSHOTS.md. It also records a short demo video of the site (MP4 and GIF), as a tour or from steps you write, and takes the screenshots a web app manifest needs.",
       "version": "0.1.0",
       "source": "./",
       "skills": ["./skills/easyscreenshot"],
@@ -17,7 +17,7 @@
       "homepage": "https://github.com/EminBudak/easyscreenshot",
       "repository": "https://github.com/EminBudak/easyscreenshot",
       "license": "MIT",
-      "keywords": ["skills", "screenshot", "website", "launch", "marketing", "design"]
+      "keywords": ["skills", "screenshot", "website", "launch", "marketing", "design", "demo", "video"]
     }
   ]
 }
