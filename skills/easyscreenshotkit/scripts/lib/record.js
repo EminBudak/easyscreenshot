@@ -78,7 +78,7 @@ const LOCATE = `((spec) => {
   }
   const el = found[0];
   if (!el) return null;
-  window.__easyscreenshotTarget = el;
+  window.__easyscreenshotkitTarget = el;
   const r = el.getBoundingClientRect();
   // The point to press: the middle, or another spot of the box when
   // something lies over the middle.
@@ -98,7 +98,7 @@ const LOCATE = `((spec) => {
 const SCROLLER = `(() => {
   const doc = document.scrollingElement || document.documentElement;
   const max = Math.max(0, doc.scrollHeight - innerHeight);
-  if (max > 4) { window.__easyscreenshotScroller = null; return { inner: false, y: scrollY, max }; }
+  if (max > 4) { window.__easyscreenshotkitScroller = null; return { inner: false, y: scrollY, max }; }
   let best = null, area = 0;
   for (const el of document.querySelectorAll("body *")) {
     if (el.scrollHeight <= el.clientHeight + 4) continue;
@@ -108,7 +108,7 @@ const SCROLLER = `(() => {
     const a = Math.max(0, Math.min(r.right, innerWidth) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0));
     if (a > area) { area = a; best = el; }
   }
-  window.__easyscreenshotScroller = best;
+  window.__easyscreenshotkitScroller = best;
   if (!best || area < innerWidth * innerHeight * 0.25) return { inner: false, y: scrollY, max: 0 };
   return { inner: true, y: best.scrollTop, max: best.scrollHeight - best.clientHeight };
 })()`;
@@ -116,7 +116,7 @@ const SCROLLER = `(() => {
 // A glide: the page moves itself to the next position on each animation
 // frame (every skip-th one), and notes where it really went and when.
 const GLIDE = `((positions, inner, skip) => new Promise((done) => {
-  const el = inner ? window.__easyscreenshotScroller : null;
+  const el = inner ? window.__easyscreenshotkitScroller : null;
   const out = [];
   let i = 0;
   let n = 0;
@@ -157,7 +157,7 @@ const TOP_COVER = `(() => {
 // within a few seconds of a click or a key (a menu, a dialog), and what
 // comes up next to the pointer as it moves (a tooltip, a hover card).
 const WATCH_FLOATING = `(function (keepMs) {
-  if (window.__easyscreenshotFloating) return;
+  if (window.__easyscreenshotkitFloating) return;
   let input = -1e9, moved = -1e9, px = -1e9, py = -1e9;
   addEventListener("pointerdown", () => { input = performance.now(); }, true);
   addEventListener("keydown", () => { input = performance.now(); }, true);
@@ -209,13 +209,13 @@ const WATCH_FLOATING = `(function (keepMs) {
     });
   });
   observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden", "open"] });
-  window.__easyscreenshotFloating = observer;
+  window.__easyscreenshotkitFloating = observer;
 })`;
 
 // Scroll snapping and smooth scrolling would fight the frame-by-frame scroll.
 const STEADY = `(() => {
-  const style = document.getElementById("easyscreenshot-steady") || document.createElement("style");
-  style.id = "easyscreenshot-steady";
+  const style = document.getElementById("easyscreenshotkit-steady") || document.createElement("style");
+  style.id = "easyscreenshotkit-steady";
   style.textContent = "html,body{scroll-snap-type:none!important;scroll-behavior:auto!important}";
   (document.head || document.documentElement).appendChild(style);
 })()`;
@@ -722,7 +722,7 @@ class Recorder {
     const found = await this.locate(step.target);
     if (!found) throw new Error(`nothing on the page matches ${describe(step.target)}`);
     // Kept in this window: a demo in a second tab would not be recorded.
-    if (found.newTab) await this.eval(`(() => { const a = window.__easyscreenshotTarget && window.__easyscreenshotTarget.closest("a"); if (a) a.target = "_self"; })()`);
+    if (found.newTab) await this.eval(`(() => { const a = window.__easyscreenshotkitTarget && window.__easyscreenshotkitTarget.closest("a"); if (a) a.target = "_self"; })()`);
     const point = { x: found.x, y: found.y };
     const move = await this.move(point);
     await this.hold(DWELL);

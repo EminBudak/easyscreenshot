@@ -129,7 +129,7 @@ async function launch({ lang = "", args = [] } = {}) {
   if (!binary) {
     throw new Error("No Chrome, Chromium, Edge or Brave found. Install one, or point CHROME_PATH at its binary.");
   }
-  const profile = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-chrome-"));
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-chrome-"));
   const child = spawn(
     binary,
     [

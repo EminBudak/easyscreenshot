@@ -1,19 +1,19 @@
 {
-  "name": "easyscreenshot",
+  "name": "easyscreenshotkit",
   "version": "0.1.0",
   "description": "Give it a website and it picks the pages worth showing, hides the cookie banners and chat bubbles, and saves desktop, phone and full-page screenshots your agent can read. It also records a short demo video of the site and takes the screenshots a web app manifest needs.",
   "license": "MIT",
   "author": "Emin Budak",
-  "homepage": "https://github.com/EminBudak/easyscreenshot#readme",
+  "homepage": "https://github.com/EminBudak/easyscreenshotkit#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/EminBudak/easyscreenshot.git"
+    "url": "git+https://github.com/EminBudak/easyscreenshotkit.git"
   },
-  "bugs": "https://github.com/EminBudak/easyscreenshot/issues",
+  "bugs": "https://github.com/EminBudak/easyscreenshotkit/issues",
   "bin": {
-    "easyscreenshot": "skills/easyscreenshot/scripts/easyscreenshot.js"
+    "easyscreenshotkit": "skills/easyscreenshotkit/scripts/easyscreenshotkit.js"
   },
-  "main": "skills/easyscreenshot/scripts/lib/shots.js",
+  "main": "skills/easyscreenshotkit/scripts/lib/shots.js",
   "files": [
     "skills",
     "README.md",

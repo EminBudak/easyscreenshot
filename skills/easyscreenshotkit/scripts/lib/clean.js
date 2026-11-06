@@ -63,8 +63,8 @@ const KNOWN = [
 // later and inline for ones the page styled inline. A selector the browser
 // cannot read is skipped and named. Returns how many elements were showing.
 const HIDE_SELECTORS = `(function (selectors) {
-  var style = document.getElementById("easyscreenshot-hide") || document.createElement("style");
-  style.id = "easyscreenshot-hide";
+  var style = document.getElementById("easyscreenshotkit-hide") || document.createElement("style");
+  style.id = "easyscreenshotkit-hide";
   var rules = [], bad = [], hidden = 0, big = false;
   selectors.forEach(function (selector) {
     var found;

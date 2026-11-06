@@ -59,7 +59,7 @@ function sheetHtml(manifest, dir) {
   </style></head><body><main>
   <header><h1>${escape(manifest.site || host)}</h1><span>${escape(host)}</span></header>
   <div class="grid">${cards}</div>
-  <footer>github.com/EminBudak/easyscreenshot</footer>
+  <footer>github.com/EminBudak/easyscreenshotkit</footer>
   </main></body></html>`;
 }
 
@@ -67,7 +67,7 @@ function sheetHtml(manifest, dir) {
 // the saved PNGs, opened in a new window and captured whole.
 async function renderSheet(chrome, manifest, dir) {
   if (!manifest.pages.some((page) => picksFor(page).length)) return null;
-  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-sheet-"));
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-sheet-"));
   const file = path.join(temp, "sheet.html");
   fs.writeFileSync(file, sheetHtml(manifest, dir));
   const tab = await openTab(chrome, SHEET);

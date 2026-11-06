@@ -1,7 +1,7 @@
 "use strict";
 
 // A demo's steps: visit, scroll, click, type, wait, hover and key. They come
-// from a file the user writes (YAML or JSON) or from the tour easyscreenshot
+// from a file the user writes (YAML or JSON) or from the tour easyscreenshotkit
 // plans by itself, and are checked before the browser opens, so a typo fails
 // at once with the step's number instead of halfway through a recording.
 //

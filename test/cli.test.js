@@ -9,13 +9,13 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const test = require("node:test");
-const { parse } = require("../skills/easyscreenshot/scripts/easyscreenshot");
-const { parseSizes, normalizeUrl, prepareDir, slugOf, siteName } = require("../skills/easyscreenshot/scripts/lib/shots");
+const { parse } = require("../skills/easyscreenshotkit/scripts/easyscreenshotkit");
+const { parseSizes, normalizeUrl, prepareDir, slugOf, siteName } = require("../skills/easyscreenshotkit/scripts/lib/shots");
 
-const CLI = path.resolve(__dirname, "../skills/easyscreenshot/scripts/easyscreenshot.js");
+const CLI = path.resolve(__dirname, "../skills/easyscreenshotkit/scripts/easyscreenshotkit.js");
 
 test("the skill folder carries its own version, the same as the package's and every plugin manifest's", () => {
-  const version = require("../skills/easyscreenshot/scripts/lib/version");
+  const version = require("../skills/easyscreenshotkit/scripts/lib/version");
   assert.equal(version, require("../package.json").version);
   assert.equal(version, require("../.claude-plugin/marketplace.json").plugins[0].version);
   assert.equal(version, require("../.codex-plugin/plugin.json").version);
@@ -25,7 +25,7 @@ test("the skill folder carries its own version, the same as the package's and ev
 test("the CLI explains itself and refuses a missing address or a bad option", () => {
   const help = spawnSync(process.execPath, [CLI, "--help"], { encoding: "utf8" });
   assert.equal(help.status, 0);
-  assert.match(help.stdout, /Usage: easyscreenshot <url>/);
+  assert.match(help.stdout, /Usage: easyscreenshotkit <url>/);
   const none = spawnSync(process.execPath, [CLI], { encoding: "utf8" });
   assert.equal(none.status, 2);
   assert.match(none.stderr, /Give one website address/);
@@ -96,12 +96,12 @@ test("addresses, page names and the site's name", () => {
 });
 
 test("never writes into a folder that holds someone else's files, and replaces an earlier run's", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-dir-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-dir-"));
   try {
     fs.writeFileSync(path.join(dir, "notes.txt"), "mine");
     assert.throws(() => prepareDir(dir), /not empty/);
     fs.rmSync(path.join(dir, "notes.txt"));
-    fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify({ version: 1, tool: "easyscreenshot 0.1.0" }));
+    fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify({ version: 1, tool: "easyscreenshotkit 0.1.0" }));
     fs.writeFileSync(path.join(dir, "01-home-desktop.png"), "old");
     fs.writeFileSync(path.join(dir, "keep-me.txt"), "mine");
     prepareDir(dir);

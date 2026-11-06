@@ -122,7 +122,7 @@ function addPwaShots(groups) {
 // address; anything that is not http(s) is refused.
 function normalizeUrl(raw) {
   const text = String(raw || "").trim();
-  if (!text) throw new Error("Give a website address, for example: easyscreenshot acme.com");
+  if (!text) throw new Error("Give a website address, for example: easyscreenshotkit acme.com");
   let url;
   try {
     url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(text) ? text : `https://${text}`);
@@ -159,7 +159,7 @@ function removeRunFiles(dir) {
 }
 
 // The run's folder: created when missing, reused when an earlier
-// easyscreenshot run made it (that run's files are replaced), refused when
+// easyscreenshotkit run made it (that run's files are replaced), refused when
 // it holds anything else, so a run never mixes into or overwrites someone's
 // own files.
 function prepareDir(dir) {
@@ -171,8 +171,8 @@ function prepareDir(dir) {
   } catch {
     // Not a run of ours.
   }
-  if (!old || old.version !== 1 || !/^easyscreenshot /.test(String(old.tool || ""))) {
-    throw new Error(`${dir} is not empty and holds no earlier easyscreenshot run. Pick another folder with --out.`);
+  if (!old || old.version !== 1 || !/^easyscreenshotkit /.test(String(old.tool || ""))) {
+    throw new Error(`${dir} is not empty and holds no earlier easyscreenshotkit run. Pick another folder with --out.`);
   }
   removeRunFiles(dir);
 }
@@ -352,7 +352,7 @@ async function evaluate(cdp, expression, fallback) {
   return result && result.value !== undefined ? result.value : fallback;
 }
 
-// Why a page found by easyscreenshot is not kept, or "". What the address
+// Why a page found by easyscreenshotkit is not kept, or "". What the address
 // and the first look tell is checked at once; whether the page loaded and
 // whether it repeats a page already kept, once it has settled.
 function rejectAtOnce({ asked, nav, info }, { site, homeKey }) {
@@ -489,7 +489,7 @@ function saveShots(page, result, theme, dir, written) {
       Title: page.title || "",
       Source: result.nav.url,
       "Creation Time": new Date().toISOString(),
-      Software: `easyscreenshot ${version}`,
+      Software: `easyscreenshotkit ${version}`,
     });
     save(dir, file, png);
     written.push(file);
@@ -519,7 +519,7 @@ function savePwa(kept, dir) {
   if (!plan.files.length) return out;
   for (const file of plan.files) {
     const page = kept.find((other) => other.n === file.page);
-    const png = tagPng(file.png, { Title: page.title || "", Source: page.url, "Creation Time": new Date().toISOString(), Software: `easyscreenshot ${version}` });
+    const png = tagPng(file.png, { Title: page.title || "", Source: page.url, "Creation Time": new Date().toISOString(), Software: `easyscreenshotkit ${version}` });
     save(path.join(dir, PWA_DIR, "screenshots"), file.name, png);
     out.screenshots.push({ file: `${PWA_DIR}/screenshots/${file.name}`, page: file.page, ...file.entry });
   }
@@ -594,7 +594,7 @@ function describeSizes(groups) {
 
 function writeMarkdown(manifest, dir) {
   const date = manifest.takenAt.slice(0, 10);
-  const lines = [`# Screenshots of ${manifest.site}`, "", `Taken from ${manifest.url} on ${date} by easyscreenshot ${version}.`, ""];
+  const lines = [`# Screenshots of ${manifest.site}`, "", `Taken from ${manifest.url} on ${date} by easyscreenshotkit ${version}.`, ""];
   lines.push(
     "Use the files as they are: they are the real pages, with cookie banners, chat bubbles and other floating boxes hidden. Do not redraw the interface, and do not present them as another product's. Boxes are in each image's own pixels: x, y, width, height.",
     "",
@@ -666,7 +666,7 @@ async function takeShots(rawUrl, options = {}) {
     if (!url || siteOf(url.href) !== siteOf(home)) throw new Error(`--page ${raw} is not a page of ${siteOf(home)}`);
     return url.href;
   });
-  const target = dir || `easyscreenshot-${siteOf(asked)}`;
+  const target = dir || `easyscreenshotkit-${siteOf(asked)}`;
   const existed = fs.existsSync(target);
   prepareDir(target);
   // The screenshots for a manifest are taken in the first theme only.
@@ -847,7 +847,7 @@ async function takeShots(rawUrl, options = {}) {
   }
   const manifest = {
     version: 1,
-    tool: `easyscreenshot ${version}`,
+    tool: `easyscreenshotkit ${version}`,
     url: asked,
     site: name,
     takenAt: new Date().toISOString(),

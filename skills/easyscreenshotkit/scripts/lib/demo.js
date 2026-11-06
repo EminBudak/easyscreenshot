@@ -1,6 +1,6 @@
 "use strict";
 
-// easyscreenshot demo: a short video of a website. A tour of the pages the
+// easyscreenshotkit demo: a short video of a website. A tour of the pages the
 // screenshots would take, or the steps written in a file, recorded in the
 // user's own Chrome and encoded with their own ffmpeg. What comes out, in
 // one folder:
@@ -29,7 +29,7 @@ const { tagPng, pngSize } = require("./png");
 const { setTimeLimit, timeLeft } = require("./time");
 const version = require("./version");
 
-const USAGE = `Usage: easyscreenshot demo <url> [options]
+const USAGE = `Usage: easyscreenshotkit demo <url> [options]
 
 Records a short demo video of a website: a tour of the pages worth showing,
 or the steps you write in a file. The page plays in a browser window on a
@@ -41,7 +41,7 @@ says where every step starts and ends, in seconds and in frames.
 Options:
   --steps <file>      follow the steps in this YAML or JSON file instead of
                       a tour: visit, scroll, click, type, wait, hover, key
-  --out <dir>         where to save (default: ./easyscreenshot-demo-<host>)
+  --out <dir>         where to save (default: ./easyscreenshotkit-demo-<host>)
   --pages <n>         pages in the tour, the home page included (default: 4,
                       at most 8)
   --page <path>       take this page in the tour, e.g. --page /pricing
@@ -107,7 +107,7 @@ function parseDemo(argv) {
   if (!["light", "dark"].includes(options.theme)) throw new Error("--theme takes light or dark");
   if (options.lang && !/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(options.lang)) throw new Error(`--lang takes a language code such as tr or pt-BR, not ${options.lang}`);
   if (options.steps && (options.extra.length || argv.some((arg) => arg === "--pages" || arg.startsWith("--pages=")))) throw new Error("--pages and --page are for the tour; a steps file says which pages to visit");
-  if (!options.help && !options.version && (rest.length > 1 || (!rest.length && !options.steps))) throw new Error("Give one website address, for example: easyscreenshot demo acme.com");
+  if (!options.help && !options.version && (rest.length > 1 || (!rest.length && !options.steps))) throw new Error("Give one website address, for example: easyscreenshotkit demo acme.com");
   return { ...options, url: rest[0] || "" };
 }
 
@@ -133,8 +133,8 @@ function prepareDemoDir(dir, { steps = "", tour = false } = {}) {
     } catch {
       // Not a demo of ours.
     }
-    if (!old || old.kind !== "demo" || !/^easyscreenshot /.test(String(old.tool || ""))) {
-      throw new Error(`${dir} is not empty and holds no earlier easyscreenshot demo. Pick another folder with --out.`);
+    if (!old || old.kind !== "demo" || !/^easyscreenshotkit /.test(String(old.tool || ""))) {
+      throw new Error(`${dir} is not empty and holds no earlier easyscreenshotkit demo. Pick another folder with --out.`);
     }
   }
   for (const name of names) {
@@ -210,7 +210,7 @@ async function makeDemo(rawUrl, options = {}) {
   if (!ffmpeg) throw new Error(MISSING);
   const encoder = await pickEncoder(ffmpeg);
   if (!encoder) throw new Error(`${ffmpeg} has no H.264 encoder (x264, VideoToolbox, OpenH264 or Media Foundation). Install a full build of ffmpeg.`);
-  const target = dir || `easyscreenshot-demo-${siteOf(asked)}`;
+  const target = dir || `easyscreenshotkit-demo-${siteOf(asked)}`;
   const existed = fs.existsSync(target);
   prepareDemoDir(target, { steps: stepsFile, tour: !script });
   const frames = fs.mkdtempSync(path.join(target, ".frames-"));
@@ -286,7 +286,7 @@ async function makeDemo(rawUrl, options = {}) {
     } finally {
       await composer.close();
     }
-    const png = tagPng(poster.png, { Title: `${name} demo`, Source: asked, "Creation Time": new Date().toISOString(), Software: `easyscreenshot ${version}` });
+    const png = tagPng(poster.png, { Title: `${name} demo`, Source: asked, "Creation Time": new Date().toISOString(), Software: `easyscreenshotkit ${version}` });
     fs.writeFileSync(path.join(target, "poster.png"), png);
     let gifInfo = null;
     if (gif) {
@@ -343,7 +343,7 @@ async function makeDemo(rawUrl, options = {}) {
     const manifest = {
       version: 1,
       kind: "demo",
-      tool: `easyscreenshot ${version}`,
+      tool: `easyscreenshotkit ${version}`,
       url: asked,
       site: name,
       madeAt: new Date().toISOString(),
@@ -358,7 +358,7 @@ async function makeDemo(rawUrl, options = {}) {
     };
     fs.writeFileSync(path.join(target, "steps.json"), JSON.stringify(manifest, null, 2) + "\n");
     if (tour) {
-      const header = [`The tour easyscreenshot ${version} took of ${new URL(asked).hostname.replace(/^www\./, "")}.`, "Edit it and record again: easyscreenshot demo --steps demo.yaml"];
+      const header = [`The tour easyscreenshotkit ${version} took of ${new URL(asked).hostname.replace(/^www\./, "")}.`, "Edit it and record again: easyscreenshotkit demo --steps demo.yaml"];
       fs.writeFileSync(path.join(target, "demo.yaml"), toYaml({ url: asked, steps: records.map((record) => asWritten(record.step)) }, header));
     }
     fs.rmSync(frames, { recursive: true, force: true });
@@ -395,7 +395,7 @@ async function main(argv) {
   try {
     options = parseDemo(argv);
   } catch (err) {
-    process.stderr.write(`easyscreenshot demo: ${err.message}\n\n${USAGE}\n`);
+    process.stderr.write(`easyscreenshotkit demo: ${err.message}\n\n${USAGE}\n`);
     process.exit(2);
   }
   if (options.help) return void process.stdout.write(`${USAGE}\n`);
@@ -422,7 +422,7 @@ async function main(argv) {
     process.stdout.write(options.json ? JSON.stringify(result.manifest, null, 2) + "\n" : summary(result) + "\n");
   } catch (err) {
     if (options.json) process.stdout.write(JSON.stringify({ ok: false, error: err.message }) + "\n");
-    process.stderr.write(`easyscreenshot demo: ${err.message}\n`);
+    process.stderr.write(`easyscreenshotkit demo: ${err.message}\n`);
     process.exit(1);
   }
 }

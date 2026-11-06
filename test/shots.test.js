@@ -11,12 +11,12 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const test = require("node:test");
-const { takeShots } = require("../skills/easyscreenshot/scripts/lib/shots");
-const { findChrome } = require("../skills/easyscreenshot/scripts/lib/chrome");
-const { pngText } = require("../skills/easyscreenshot/scripts/lib/png");
+const { takeShots } = require("../skills/easyscreenshotkit/scripts/lib/shots");
+const { findChrome } = require("../skills/easyscreenshotkit/scripts/lib/chrome");
+const { pngText } = require("../skills/easyscreenshotkit/scripts/lib/png");
 const { readPng, serve, near } = require("./helpers");
 
-const CLI = path.resolve(__dirname, "../skills/easyscreenshot/scripts/easyscreenshot.js");
+const CLI = path.resolve(__dirname, "../skills/easyscreenshotkit/scripts/easyscreenshotkit.js");
 const noBrowser = !findChrome() && "no Chrome, Chromium, Edge or Brave installed";
 
 const RED = [200, 0, 0];
@@ -170,7 +170,7 @@ function runCli(args) {
   });
 }
 
-const tempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-run-"));
+const tempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-run-"));
 const css = (png, scale, x, y) => png.pixel(Math.round(x * scale), Math.round(y * scale));
 
 test("picks the pages worth showing and leaves the rest out with reasons", { skip: noBrowser, timeout: 280_000 }, async () => {

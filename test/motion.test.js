@@ -5,8 +5,8 @@
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { ease, curve, pointAt, moveDuration, scrollDuration, cursorAt, planCamera, cameraAt, ringsAt, keyAt, ZOOM_IN } = require("../skills/easyscreenshot/scripts/lib/motion");
-const { layoutOf, backdropOf, addressOf, frameAt, stateAt } = require("../skills/easyscreenshot/scripts/lib/compose");
+const { ease, curve, pointAt, moveDuration, scrollDuration, cursorAt, planCamera, cameraAt, ringsAt, keyAt, ZOOM_IN } = require("../skills/easyscreenshotkit/scripts/lib/motion");
+const { layoutOf, backdropOf, addressOf, frameAt, stateAt } = require("../skills/easyscreenshotkit/scripts/lib/compose");
 
 const viewport = { width: 1600, height: 900 };
 const near = (a, b, tolerance = 1e-6) => Math.abs(a - b) <= tolerance;

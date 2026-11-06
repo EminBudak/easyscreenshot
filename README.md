@@ -1,19 +1,19 @@
-# easyscreenshot
+# easyscreenshotkit
 
 Give it a website. It picks the pages worth showing, hides the cookie banners and chat bubbles, and saves desktop, phone and full-page screenshots your coding agent can use. It can also [record a demo](#record-a-demo) of the site.
 
 ```bash
-npx easyscreenshot@latest linear.app
+npx easyscreenshotkit@latest linear.app
 ```
 
-![The pages easyscreenshot picked on linear.app](.github/assets/linear-sheet.jpg)
+![The pages easyscreenshotkit picked on linear.app](.github/assets/linear-sheet.jpg)
 
-A launch video, a Product Hunt gallery, a pitch deck or a README needs the product's real screens. Taking them by hand means opening each page, closing the cookie banner, waiting for the pictures, scrolling down and doing it all again on a phone, and an agent asked to do it either guesses the pages or draws the interface itself. easyscreenshot reads the site's own menu, picks the pages a visitor would look at first (pricing, features, how it works), and saves each one clean, with a manifest that tells your agent what is in every file.
+A launch video, a Product Hunt gallery, a pitch deck or a README needs the product's real screens. Taking them by hand means opening each page, closing the cookie banner, waiting for the pictures, scrolling down and doing it all again on a phone, and an agent asked to do it either guesses the pages or draws the interface itself. easyscreenshotkit reads the site's own menu, picks the pages a visitor would look at first (pricing, features, how it works), and saves each one clean, with a manifest that tells your agent what is in every file.
 
 ## What you get
 
 ```
-easyscreenshot-linear.app/
+easyscreenshotkit-linear.app/
   SCREENSHOTS.md          every page: why it was picked, its files, the headings on its first screen
   manifest.json           the same, for scripts
   sheet.png               all pages on one picture, like the one above
@@ -32,18 +32,18 @@ easyscreenshot-linear.app/
 
 ## Record a demo
 
-`easyscreenshot demo` records a short video of the site instead: a tour of the pages it would take screenshots of, or the steps you write down.
+`easyscreenshotkit demo` records a short video of the site instead: a tour of the pages it would take screenshots of, or the steps you write down.
 
 ```bash
-npx easyscreenshot@latest demo cal.com
+npx easyscreenshotkit@latest demo cal.com
 ```
 
-![A demo easyscreenshot recorded of cal.com](.github/assets/cal-demo.gif)
+![A demo easyscreenshotkit recorded of cal.com](.github/assets/cal-demo.gif)
 
 The page plays in a browser window on a backdrop, with a pointer that moves the way a hand would, smooth scrolling and a zoom on every click. Cookie banners and chat bubbles are hidden as they are for the screenshots, never clicked away.
 
 ```
-easyscreenshot-demo-cal.com/
+easyscreenshotkit-demo-cal.com/
   demo.mp4     1920x1080, H.264, 30 frames a second
   demo.gif     the same, small enough for a README (8 MB at most)
   poster.png   the first page at rest, for the video's cover
@@ -69,7 +69,7 @@ steps:
 ```
 
 ```bash
-npx easyscreenshot@latest demo --steps demo.yaml
+npx easyscreenshotkit@latest demo --steps demo.yaml
 ```
 
 | Step | What it does |
@@ -84,7 +84,7 @@ npx easyscreenshot@latest demo --steps demo.yaml
 
 A target is a CSS selector such as `"#signup"`, or the words on it such as `"text=Start free"`. Put a selector that starts with `#` in quotes, or YAML reads it as a comment. A step can also carry a `label`, which steps.json uses, and a `note` for whoever writes the narration. A JSON file of the same shape works too.
 
-The demo needs ffmpeg, the one on your machine (`brew install ffmpeg`, `sudo apt install ffmpeg` or `winget install ffmpeg`). `npx easyscreenshot@latest demo --help` lists every option; these are the main ones:
+The demo needs ffmpeg, the one on your machine (`brew install ffmpeg`, `sudo apt install ffmpeg` or `winget install ffmpeg`). `npx easyscreenshotkit@latest demo --help` lists every option; these are the main ones:
 
 ```
   --steps <file>      follow the steps in this YAML or JSON file instead of a tour
@@ -108,24 +108,24 @@ How a demo is made:
 
 ## Use it with your agent
 
-easyscreenshot ships as an [Agent Skill](https://agentskills.io). Install it once and your agent runs it by itself when it needs a product's real screens:
+easyscreenshotkit ships as an [Agent Skill](https://agentskills.io). Install it once and your agent runs it by itself when it needs a product's real screens:
 
 ```bash
-npx skills add EminBudak/easyscreenshot
+npx skills add EminBudak/easyscreenshotkit
 ```
 
 That covers Claude Code, Codex, Cursor and the other agents the [`skills`](https://github.com/vercel-labs/skills) CLI supports. In Claude Code you can add it as a plugin instead:
 
 ```
-/plugin marketplace add EminBudak/easyscreenshot
-/plugin install easyscreenshot@easyscreenshot
+/plugin marketplace add EminBudak/easyscreenshotkit
+/plugin install easyscreenshotkit@easyscreenshotkit
 ```
 
 In GitHub Copilot CLI it takes the same two steps:
 
 ```bash
-copilot plugin marketplace add EminBudak/easyscreenshot
-copilot plugin install easyscreenshot@easyscreenshot
+copilot plugin marketplace add EminBudak/easyscreenshotkit
+copilot plugin install easyscreenshotkit@easyscreenshotkit
 ```
 
 Then ask as usual:
@@ -139,9 +139,9 @@ The skill carries its own script, so it installs nothing else and needs no API k
 ## Use it from the command line
 
 ```
-npx easyscreenshot@latest <url> [options]
+npx easyscreenshotkit@latest <url> [options]
 
-  --out <dir>       where to save (default: ./easyscreenshot-<host>)
+  --out <dir>       where to save (default: ./easyscreenshotkit-<host>)
   --pages <n>       how many pages, the home page included (default: 5, at most 12)
   --page <path>     take this page too, e.g. --page /pricing (repeat for more)
   --sizes <list>    desktop, mobile, iphone, full, mobile-full or WxH, each with
@@ -172,21 +172,21 @@ The phone sizes open the page as that phone's browser would, so a site that pick
 Some runs:
 
 ```bash
-npx easyscreenshot@latest stripe.com --pages 3 --sizes desktop
-npx easyscreenshot@latest cal.com --page /pricing --sizes 1270x760@2 --out gallery
-npx easyscreenshot@latest yourapp.com --sizes iphone,mobile --theme both --out store
+npx easyscreenshotkit@latest stripe.com --pages 3 --sizes desktop
+npx easyscreenshotkit@latest cal.com --page /pricing --sizes 1270x760@2 --out gallery
+npx easyscreenshotkit@latest yourapp.com --sizes iphone,mobile --theme both --out store
 ```
 
-Installed globally (`npm install -g easyscreenshot`), the command is `easyscreenshot`. npx keeps the copy an earlier run fetched, so `npx easyscreenshot@latest` is how you get a newer version.
+Installed globally (`npm install -g easyscreenshotkit`), the command is `easyscreenshotkit`. npx keeps the copy an earlier run fetched, so `npx easyscreenshotkit@latest` is how you get a newer version.
 
-It needs Node 22 or newer and Chrome, Chromium, Edge or Brave. Set `CHROME_PATH` to pick the browser. There are no npm dependencies and nothing is downloaded: easyscreenshot drives the browser you already have over the Chrome DevTools Protocol, with a throwaway profile.
+It needs Node 22 or newer and Chrome, Chromium, Edge or Brave. Set `CHROME_PATH` to pick the browser. There are no npm dependencies and nothing is downloaded: easyscreenshotkit drives the browser you already have over the Chrome DevTools Protocol, with a throwaway profile.
 
 ## Screenshots for a web app manifest
 
 A PWA whose manifest has no screenshots gets Chrome's plain install dialog, and DevTools warns "Richer PWA Install UI won't be available on desktop". `--pwa` takes the screenshots that dialog shows:
 
 ```bash
-npx easyscreenshot@latest yourapp.com --pwa
+npx easyscreenshotkit@latest yourapp.com --pwa
 ```
 
 Next to the usual files you get:
@@ -212,8 +212,8 @@ Every screenshot is checked against Chrome's rules before it goes in:
 To check a manifest you already have, give `--pwa-check` its file or address, or your site's address:
 
 ```bash
-npx easyscreenshot@latest --pwa-check public/manifest.json
-npx easyscreenshot@latest --pwa-check yourapp.com
+npx easyscreenshotkit@latest --pwa-check public/manifest.json
+npx easyscreenshotkit@latest --pwa-check yourapp.com
 ```
 
 It tells you which screenshots a desktop and a phone would show and what to fix. It needs no browser and exits with 1 when something needs fixing, so it can run in CI.
@@ -232,7 +232,7 @@ It tells you which screenshots a desktop and a phone would show and what to fix.
 
 ## Limits
 
-- A site that answers with a bot check gets no screenshots: easyscreenshot stops and says so, and does not try to get past it.
+- A site that answers with a bot check gets no screenshots: easyscreenshotkit stops and says so, and does not try to get past it.
 - Pages behind a login are not reached.
 - A menu that only exists while the mouse is over it, and links made of buttons with no address, are not seen; the sitemap and `--page` fill in.
 - A consent wall that blurs the page or loads nothing until you agree can not be hidden away.

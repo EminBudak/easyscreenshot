@@ -72,7 +72,7 @@ function startVideo(binary, file, { fps, encoder, title = "" }) {
       "-color_range", "tv", "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709",
       "-movflags", "+faststart",
       ...(title ? ["-metadata", `title=${title}`] : []),
-      "-metadata", "comment=Recorded with easyscreenshot",
+      "-metadata", "comment=Recorded with easyscreenshotkit",
       file,
     ],
     { stdio: ["pipe", "ignore", "pipe"] },

@@ -365,7 +365,7 @@ function visitOrder(candidates) {
 }
 
 // ─── robots.txt ────────────────────────────────────────────────────────────
-// Only the pages easyscreenshot finds by itself are held to it: a page the
+// Only the pages easyscreenshotkit finds by itself are held to it: a page the
 // user names is always taken, as a browser would open it.
 function parseRobots(text) {
   const groups = [];
@@ -386,7 +386,7 @@ function parseRobots(text) {
       current.rules.push({ allow: key === "allow", path: value });
     }
   }
-  const ours = groups.find((group) => group.agents.some((agent) => agent.includes("easyscreenshot"))) || groups.find((group) => group.agents.includes("*"));
+  const ours = groups.find((group) => group.agents.some((agent) => agent.includes("easyscreenshotkit"))) || groups.find((group) => group.agents.includes("*"));
   return { sitemaps, rules: ours ? ours.rules : [] };
 }
 

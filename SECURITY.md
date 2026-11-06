@@ -2,4 +2,4 @@
 
 Please report a security problem privately, not in a public issue. Open the Security tab of this repository and choose "Report a vulnerability".
 
-Fixes go into the latest release on npm, so run `npx easyscreenshot@latest` or update a global install with `npm install -g easyscreenshot@latest`.
+Fixes go into the latest release on npm, so run `npx easyscreenshotkit@latest` or update a global install with `npm install -g easyscreenshotkit@latest`.

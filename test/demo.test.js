@@ -12,13 +12,13 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawn, spawnSync } = require("node:child_process");
 const test = require("node:test");
-const { parseDemo, prepareDemoDir, makeDemo } = require("../skills/easyscreenshot/scripts/lib/demo");
-const { readSteps } = require("../skills/easyscreenshot/scripts/lib/steps");
-const { findChrome } = require("../skills/easyscreenshot/scripts/lib/chrome");
-const { findFfmpeg } = require("../skills/easyscreenshot/scripts/lib/ffmpeg");
+const { parseDemo, prepareDemoDir, makeDemo } = require("../skills/easyscreenshotkit/scripts/lib/demo");
+const { readSteps } = require("../skills/easyscreenshotkit/scripts/lib/steps");
+const { findChrome } = require("../skills/easyscreenshotkit/scripts/lib/chrome");
+const { findFfmpeg } = require("../skills/easyscreenshotkit/scripts/lib/ffmpeg");
 const { readPng, serve, near } = require("./helpers");
 
-const CLI = path.resolve(__dirname, "../skills/easyscreenshot/scripts/easyscreenshot.js");
+const CLI = path.resolve(__dirname, "../skills/easyscreenshotkit/scripts/easyscreenshotkit.js");
 const ffmpeg = findFfmpeg();
 const missing = !findChrome() ? "no Chrome, Chromium, Edge or Brave installed" : !ffmpeg ? "no ffmpeg installed" : false;
 
@@ -56,16 +56,16 @@ test("demo options: defaults, flags, and what is refused", () => {
 test("the CLI hands demo to its own command, with its own help", () => {
   const help = spawnSync(process.execPath, [CLI, "demo", "--help"], { encoding: "utf8" });
   assert.equal(help.status, 0);
-  assert.match(help.stdout, /Usage: easyscreenshot demo <url>/);
+  assert.match(help.stdout, /Usage: easyscreenshotkit demo <url>/);
   const none = spawnSync(process.execPath, [CLI, "demo"], { encoding: "utf8" });
   assert.equal(none.status, 2);
-  assert.match(none.stderr, /easyscreenshot demo: Give one website address/);
-  assert.match(spawnSync(process.execPath, [CLI, "--help"], { encoding: "utf8" }).stdout, /easyscreenshot demo <url>/);
+  assert.match(none.stderr, /easyscreenshotkit demo: Give one website address/);
+  assert.match(spawnSync(process.execPath, [CLI, "--help"], { encoding: "utf8" }).stdout, /easyscreenshotkit demo <url>/);
 });
 
 test("a demo never writes into a folder that holds someone else's files, and replaces an earlier demo's", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-demo-dir-"));
-  const earlier = () => fs.writeFileSync(path.join(dir, "steps.json"), JSON.stringify({ version: 1, kind: "demo", tool: "easyscreenshot 0.1.0" }));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-demo-dir-"));
+  const earlier = () => fs.writeFileSync(path.join(dir, "steps.json"), JSON.stringify({ version: 1, kind: "demo", tool: "easyscreenshotkit 0.1.0" }));
   try {
     fs.writeFileSync(path.join(dir, "notes.txt"), "mine");
     // A folder of someone else's is refused, and nothing in it is touched,
@@ -95,8 +95,8 @@ test("a demo never writes into a folder that holds someone else's files, and rep
     prepareDemoDir(dir, { steps: path.join(dir, "flow.yaml") });
     assert.deepEqual(fs.readdirSync(dir), ["flow.yaml"]);
     // A screenshots run is not a demo.
-    fs.writeFileSync(path.join(dir, "steps.json"), JSON.stringify({ version: 1, tool: "easyscreenshot 0.1.0" }));
-    assert.throws(() => prepareDemoDir(dir), /no earlier easyscreenshot demo/);
+    fs.writeFileSync(path.join(dir, "steps.json"), JSON.stringify({ version: 1, tool: "easyscreenshotkit 0.1.0" }));
+    assert.throws(() => prepareDemoDir(dir), /no earlier easyscreenshotkit demo/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -168,7 +168,7 @@ function probe(video) {
   return JSON.parse(out.stdout).streams[0];
 }
 
-const tempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-demo-run-"));
+const tempDir = () => fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-demo-run-"));
 // The page's CSS pixel (x, y) in the video when it is not zoomed: the
 // window's content starts at (160, 112), one video pixel per CSS pixel.
 const unzoomed = (png, x, y) => png.pixel(160 + x, 112 + y);

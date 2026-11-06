@@ -175,7 +175,7 @@ async function waitForPictures(cdp, clip) {
   let waited = false;
   while (left > 0 && timeLeft() > 30_000) {
     const patient = Date.now() - started < PATIENCE_MS;
-    const expression = `(${PENDING_PICTURES})(${frame}, ${patient}) + (window.__easyscreenshot && ${patient} ? window.__easyscreenshot.moving(${frame}) : 0)`;
+    const expression = `(${PENDING_PICTURES})(${frame}, ${patient}) + (window.__easyscreenshotkit && ${patient} ? window.__easyscreenshotkit.moving(${frame}) : 0)`;
     const pending = await cdp
       .send("Runtime.evaluate", { expression, returnByValue: true }, 5_000)
       .then(({ result }) => Number(result && result.value) || 0, () => 0);
@@ -235,8 +235,8 @@ async function captureScreen(cdp) {
 // background) that never settles, and is no longer waited for: on a page
 // full of them, every screen waited its whole three seconds.
 const WATCH = `(function () {
-  if (window.__easyscreenshot) return;
-  var kept = window.__easyscreenshot = { done: new Set(), undo: [], changes: [], lastMove: 0, streaks: new Map() };
+  if (window.__easyscreenshotkit) return;
+  var kept = window.__easyscreenshotkit = { done: new Set(), undo: [], changes: [], lastMove: 0, streaks: new Map() };
   var root = document.documentElement;
   kept.undo.push([root, "scroll-snap-type", root.style.getPropertyValue("scroll-snap-type"), root.style.getPropertyPriority("scroll-snap-type")]);
   root.style.setProperty("scroll-snap-type", "none", "important");
@@ -277,7 +277,7 @@ const WATCH = `(function () {
 // see-through: one image of the page shows them once, at its top. Scroll
 // snapping is off. All is put back afterwards.
 const SET_ASIDE = `(function (fixedToo) {
-  var kept = window.__easyscreenshot;
+  var kept = window.__easyscreenshotkit;
   if (!kept) return;
   var put = function (el, name, value) {
     kept.undo.push([el, name, el.style.getPropertyValue(name), el.style.getPropertyPriority(name)]);
@@ -306,8 +306,8 @@ const SET_ASIDE = `(function (fixedToo) {
   kept.observer.takeRecords();
 })`;
 const PUT_BACK = `(function () {
-  var kept = window.__easyscreenshot;
-  window.__easyscreenshot = null;
+  var kept = window.__easyscreenshotkit;
+  window.__easyscreenshotkit = null;
   if (kept) {
     kept.observer.disconnect();
     for (var i = kept.undo.length - 1; i >= 0; i--) {

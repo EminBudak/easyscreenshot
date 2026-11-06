@@ -6,7 +6,7 @@
 const assert = require("node:assert/strict");
 const zlib = require("node:zlib");
 const test = require("node:test");
-const pick = require("../skills/easyscreenshot/scripts/lib/pick");
+const pick = require("../skills/easyscreenshotkit/scripts/lib/pick");
 const { serve } = require("./helpers");
 
 const HOME = "https://acme.com/";
@@ -126,7 +126,7 @@ test("robots.txt: the longest rule wins, Allow on a tie, wildcards and $", () =>
   assert.equal(pick.robotsAllows("/admin/public/page", robots.rules), true);
   assert.equal(pick.robotsAllows("/files/a.pdf", robots.rules), false);
   assert.equal(pick.robotsAllows("/files/a.pdfx", robots.rules), true);
-  const ours = pick.parseRobots("User-agent: *\nDisallow: /\n\nUser-agent: easyscreenshot\nAllow: /\n");
+  const ours = pick.parseRobots("User-agent: *\nDisallow: /\n\nUser-agent: easyscreenshotkit\nAllow: /\n");
   assert.equal(pick.robotsAllows("/pricing", ours.rules), true);
 });
 

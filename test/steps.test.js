@@ -8,8 +8,8 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
-const { parseYaml } = require("../skills/easyscreenshot/scripts/lib/yaml");
-const { normalizeSteps, readSteps, toYaml, keyOf, targetOf } = require("../skills/easyscreenshot/scripts/lib/steps");
+const { parseYaml } = require("../skills/easyscreenshotkit/scripts/lib/yaml");
+const { normalizeSteps, readSteps, toYaml, keyOf, targetOf } = require("../skills/easyscreenshotkit/scripts/lib/steps");
 
 test("YAML: mappings, lists, inline collections, quotes, numbers and comments", () => {
   const doc = parseYaml(`# a demo
@@ -171,7 +171,7 @@ test("steps: mistakes are caught with the step's number", () => {
 });
 
 test("a steps file is read from YAML or JSON, and a tour written back reads the same", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-steps-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-steps-"));
   try {
     const yaml = path.join(dir, "demo.yaml");
     fs.writeFileSync(yaml, "url: https://acme.com\nsteps:\n  - visit: /\n  - click: '#go'\n");

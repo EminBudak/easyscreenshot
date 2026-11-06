@@ -6,9 +6,9 @@ const { takeShots, normalizeUrl } = require("./lib/shots");
 const { checkManifest, describeCheck } = require("./lib/pwa");
 const version = require("./lib/version");
 
-const USAGE = `Usage: easyscreenshot <url> [options]
-       easyscreenshot --pwa-check <manifest>
-       easyscreenshot demo <url> [options]
+const USAGE = `Usage: easyscreenshotkit <url> [options]
+       easyscreenshotkit --pwa-check <manifest>
+       easyscreenshotkit demo <url> [options]
 
 Opens a website the way a browser draws it, picks the pages worth showing
 (home, pricing, features and the like), hides cookie banners, chat bubbles
@@ -17,7 +17,7 @@ screenshots in one folder. manifest.json is for tools, SCREENSHOTS.md for
 people and coding agents, sheet.png shows every page on one picture.
 
 Options:
-  --out <dir>       where to save (default: ./easyscreenshot-<host>)
+  --out <dir>       where to save (default: ./easyscreenshotkit-<host>)
   --pages <n>       how many pages, the home page included (default: 5, at most 12)
   --page <path>     take this page too, e.g. --page /pricing (repeat for more)
   --sizes <list>    desktop, mobile, iphone, full, mobile-full or WxH, each with
@@ -44,8 +44,8 @@ phone page at 2x. 1270x760@2 is a Product Hunt gallery image.
 dialog, and writes pwa/manifest-screenshots.json with the entries for them.
 --pwa-check needs no browser; it exits with 1 when something needs fixing.
 
-For a demo video of the site instead, run easyscreenshot demo <url>; see
-easyscreenshot demo --help.
+For a demo video of the site instead, run easyscreenshotkit demo <url>; see
+easyscreenshotkit demo --help.
 
 Needs Node 22 or newer and Chrome, Chromium, Edge or Brave. Set CHROME_PATH
 to pick the browser.`;
@@ -86,8 +86,8 @@ function parse(argv) {
   if (!(options.timeout >= 30 && options.timeout <= 900)) throw new Error("--timeout takes 30 to 900 seconds");
   if (!["light", "dark", "both"].includes(options.theme)) throw new Error("--theme takes light, dark or both");
   if (options.lang && !/^[a-z]{2,3}(-[a-z0-9]{2,8})*$/i.test(options.lang)) throw new Error(`--lang takes a language code such as tr or pt-BR, not ${options.lang}`);
-  if (options.pwaCheck && (rest.length || options.pwa)) throw new Error("--pwa-check takes the manifest, or the site's address, as its value and runs on its own, for example: easyscreenshot --pwa-check acme.com");
-  if (!options.help && !options.version && !options.pwaCheck && rest.length !== 1) throw new Error("Give one website address, for example: easyscreenshot acme.com");
+  if (options.pwaCheck && (rest.length || options.pwa)) throw new Error("--pwa-check takes the manifest, or the site's address, as its value and runs on its own, for example: easyscreenshotkit --pwa-check acme.com");
+  if (!options.help && !options.version && !options.pwaCheck && rest.length !== 1) throw new Error("Give one website address, for example: easyscreenshotkit acme.com");
   return { ...options, url: rest[0] };
 }
 
@@ -99,7 +99,7 @@ async function pwaCheck(options) {
     report = await checkManifest(target);
   } catch (err) {
     if (options.json) process.stdout.write(JSON.stringify({ ok: false, error: err.message }) + "\n");
-    process.stderr.write(`easyscreenshot: ${err.message}\n`);
+    process.stderr.write(`easyscreenshotkit: ${err.message}\n`);
     process.exit(1);
   }
   process.stdout.write(options.json ? JSON.stringify(report, null, 2) + "\n" : describeCheck(report) + "\n");
@@ -145,7 +145,7 @@ async function main() {
   try {
     options = parse(process.argv.slice(2));
   } catch (err) {
-    process.stderr.write(`easyscreenshot: ${err.message}\n\n${USAGE}\n`);
+    process.stderr.write(`easyscreenshotkit: ${err.message}\n\n${USAGE}\n`);
     process.exit(2);
   }
   if (options.help) return void process.stdout.write(`${USAGE}\n`);
@@ -169,7 +169,7 @@ async function main() {
     process.stdout.write(options.json ? JSON.stringify(result.manifest, null, 2) + "\n" : summary(result) + "\n");
   } catch (err) {
     if (options.json) process.stdout.write(JSON.stringify({ ok: false, error: err.message }) + "\n");
-    process.stderr.write(`easyscreenshot: ${err.message}\n`);
+    process.stderr.write(`easyscreenshotkit: ${err.message}\n`);
     process.exit(1);
   }
 }

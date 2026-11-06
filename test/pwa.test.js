@@ -10,12 +10,12 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 const test = require("node:test");
-const { imageInfo, checkScreenshots, labelOf, planPwa, manifestLink, checkManifest, describeCheck } = require("../skills/easyscreenshot/scripts/lib/pwa");
-const { parseSizes, addPwaShots, prepareDir } = require("../skills/easyscreenshot/scripts/lib/shots");
-const { parse } = require("../skills/easyscreenshot/scripts/easyscreenshot");
+const { imageInfo, checkScreenshots, labelOf, planPwa, manifestLink, checkManifest, describeCheck } = require("../skills/easyscreenshotkit/scripts/lib/pwa");
+const { parseSizes, addPwaShots, prepareDir } = require("../skills/easyscreenshotkit/scripts/lib/shots");
+const { parse } = require("../skills/easyscreenshotkit/scripts/easyscreenshotkit");
 const { pngOf, serve } = require("./helpers");
 
-const CLI = path.resolve(__dirname, "../skills/easyscreenshot/scripts/easyscreenshot.js");
+const CLI = path.resolve(__dirname, "../skills/easyscreenshotkit/scripts/easyscreenshotkit.js");
 
 // The first bytes of an image, as much as its size is read from.
 function pngHead(width, height) {
@@ -207,10 +207,10 @@ test("--pwa adds its captures to the windows a run opens anyway, else opens its 
 });
 
 test("a run's folder: an earlier run's screenshots for a manifest go, other files in pwa/ stay", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-pwa-dir-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-pwa-dir-"));
   try {
     const run = () => {
-      fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify({ version: 1, tool: "easyscreenshot 0.1.0" }));
+      fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify({ version: 1, tool: "easyscreenshotkit 0.1.0" }));
       fs.mkdirSync(path.join(dir, "pwa", "screenshots"), { recursive: true });
       fs.writeFileSync(path.join(dir, "pwa", "manifest-screenshots.json"), "{}");
       fs.writeFileSync(path.join(dir, "pwa", "screenshots", "wide-01.png"), "old");
@@ -229,7 +229,7 @@ test("a run's folder: an earlier run's screenshots for a manifest go, other file
 });
 
 test("--pwa-check: a manifest file and its screenshots next to it, on the command line", () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshot-pwa-check-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "easyscreenshotkit-pwa-check-"));
   try {
     fs.mkdirSync(path.join(dir, "screenshots"));
     fs.writeFileSync(path.join(dir, "screenshots", "wide-01.png"), pngHead(1920, 1080));

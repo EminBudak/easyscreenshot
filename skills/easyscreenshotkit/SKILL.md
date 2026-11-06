@@ -1,16 +1,16 @@
 ---
-name: easyscreenshot
+name: easyscreenshotkit
 description: Take real screenshots of a product's website before you make anything that shows it, such as a launch video, store or Product Hunt images, a deck, a README, a landing page, a social post or the screenshots of a web app manifest. Picks the pages worth showing (home, pricing, features and the like), hides cookie banners and chat bubbles, and saves desktop, phone and whole-page PNGs with a manifest. Also records a short demo video of the site (MP4 and GIF, with a pointer, smooth scrolling and a zoom on clicks), as a tour or from steps you write. Use it whenever the user asks for screenshots or a demo video of a site, or for work that needs the product's real screens, and you know its address.
 ---
 
-# easyscreenshot
+# easyscreenshotkit
 
-Screens an agent draws itself look fake at first glance: a menu the site does not have, a pricing table with made-up plans. easyscreenshot opens the real site in a headless browser, picks the pages worth showing, and saves them without the cookie banners and chat bubbles that float over them.
+Screens an agent draws itself look fake at first glance: a menu the site does not have, a pricing table with made-up plans. easyscreenshotkit opens the real site in a headless browser, picks the pages worth showing, and saves them without the cookie banners and chat bubbles that float over them.
 
 ## Take them
 
 ```bash
-node <skill>/scripts/easyscreenshot.js <url> --out screenshots/<name>
+node <skill>/scripts/easyscreenshotkit.js <url> --out screenshots/<name>
 ```
 
 `<skill>` is this skill's folder. The script needs Node 22 or newer and Chrome, Chromium, Edge or Brave on the machine; it installs nothing and needs no API key. A run takes two or three minutes, up to five on a site with very long pages.
@@ -35,7 +35,7 @@ node <skill>/scripts/easyscreenshot.js <url> --out screenshots/<name>
 When the user wants a demo video of the product, a GIF for a README, or footage of the real site for a launch video, record one:
 
 ```bash
-node <skill>/scripts/easyscreenshot.js demo <url> --out demo/<name>
+node <skill>/scripts/easyscreenshotkit.js demo <url> --out demo/<name>
 ```
 
 It needs ffmpeg on the machine as well. Without steps it takes a tour of the pages the screenshots would take, clicking through the site's own menu; `--pages 3` makes it shorter. A run takes two to four minutes.
@@ -64,9 +64,9 @@ What comes back:
 
 ## When it goes wrong
 
-- A site that answers with a bot check gives no screenshots: easyscreenshot stops and says so. Ask the user for screenshots instead.
+- A site that answers with a bot check gives no screenshots: easyscreenshotkit stops and says so. Ask the user for screenshots instead.
 - Screens behind a login are not reached. Ask the user for them, or for a public page that shows the same thing.
 - If something still covers a page, run again with `--hide '<css selector>'`. Slow sites can take `--timeout 600`.
 - A demo step that points at nothing stops the run and names the step. Check the selector or the words against the page, or put a `wait` for it before the step.
 - When the demo says ffmpeg is missing, ask the user to install it.
-- Never present a screenshot as the product's own when it did not come from easyscreenshot or from the user.
+- Never present a screenshot as the product's own when it did not come from easyscreenshotkit or from the user.

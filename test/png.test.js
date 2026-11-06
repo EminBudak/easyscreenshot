@@ -5,8 +5,8 @@
 
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const { joinScreens, tagPng, pngText, pngSize } = require("../skills/easyscreenshot/scripts/lib/png");
-const { screenTops } = require("../skills/easyscreenshot/scripts/lib/page");
+const { joinScreens, tagPng, pngText, pngSize } = require("../skills/easyscreenshotkit/scripts/lib/png");
+const { screenTops } = require("../skills/easyscreenshotkit/scripts/lib/page");
 const { readPng, pngOf } = require("./helpers");
 
 // A page 100 px tall whose every row has its own color, captured as
@@ -51,7 +51,7 @@ test("a screen that came back as RGBA joins the RGB ones, its see-through pixels
       }
     }
     const zlib = require("node:zlib");
-    const { pngChunk } = require("../skills/easyscreenshot/scripts/lib/png");
+    const { pngChunk } = require("../skills/easyscreenshotkit/scripts/lib/png");
     const header = Buffer.from(png.subarray(16, 29));
     header[9] = 6;
     return Buffer.concat([png.subarray(0, 8), pngChunk("IHDR", header), pngChunk("IDAT", zlib.deflateSync(raw)), pngChunk("IEND", Buffer.alloc(0))]);
