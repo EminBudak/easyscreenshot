@@ -106,6 +106,14 @@ test("never writes into a folder that holds someone else's files, and replaces a
     fs.writeFileSync(path.join(dir, "keep-me.txt"), "mine");
     prepareDir(dir);
     assert.deepEqual(fs.readdirSync(dir).sort(), ["keep-me.txt"]);
+    // A run from when the tool was called easyscreenshot counts too, another
+    // tool's does not.
+    fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify({ version: 1, tool: "easyscreenshot 0.1.0" }));
+    fs.writeFileSync(path.join(dir, "01-home-desktop.png"), "old");
+    prepareDir(dir);
+    assert.deepEqual(fs.readdirSync(dir).sort(), ["keep-me.txt"]);
+    fs.writeFileSync(path.join(dir, "manifest.json"), JSON.stringify({ version: 1, tool: "easyscreenshotter 1.0.0" }));
+    assert.throws(() => prepareDir(dir), /no earlier easyscreenshotkit run/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

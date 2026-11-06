@@ -171,7 +171,8 @@ function prepareDir(dir) {
   } catch {
     // Not a run of ours.
   }
-  if (!old || old.version !== 1 || !/^easyscreenshotkit /.test(String(old.tool || ""))) {
+  // Runs from when the tool was called easyscreenshot count too.
+  if (!old || old.version !== 1 || !/^easyscreenshot(kit)? /.test(String(old.tool || ""))) {
     throw new Error(`${dir} is not empty and holds no earlier easyscreenshotkit run. Pick another folder with --out.`);
   }
   removeRunFiles(dir);

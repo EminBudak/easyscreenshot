@@ -94,6 +94,11 @@ test("a demo never writes into a folder that holds someone else's files, and rep
     fs.writeFileSync(path.join(dir, "flow.yaml"), "steps:\n  - wait: 1\n");
     prepareDemoDir(dir, { steps: path.join(dir, "flow.yaml") });
     assert.deepEqual(fs.readdirSync(dir), ["flow.yaml"]);
+    // A demo from when the tool was called easyscreenshot counts too.
+    fs.writeFileSync(path.join(dir, "steps.json"), JSON.stringify({ version: 1, kind: "demo", tool: "easyscreenshot 0.1.0" }));
+    fs.writeFileSync(path.join(dir, "demo.mp4"), "old");
+    prepareDemoDir(dir, { steps: path.join(dir, "flow.yaml") });
+    assert.deepEqual(fs.readdirSync(dir), ["flow.yaml"]);
     // A screenshots run is not a demo.
     fs.writeFileSync(path.join(dir, "steps.json"), JSON.stringify({ version: 1, tool: "easyscreenshotkit 0.1.0" }));
     assert.throws(() => prepareDemoDir(dir), /no earlier easyscreenshotkit demo/);

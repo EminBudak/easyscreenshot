@@ -133,7 +133,8 @@ function prepareDemoDir(dir, { steps = "", tour = false } = {}) {
     } catch {
       // Not a demo of ours.
     }
-    if (!old || old.kind !== "demo" || !/^easyscreenshotkit /.test(String(old.tool || ""))) {
+    // Demos from when the tool was called easyscreenshot count too.
+    if (!old || old.kind !== "demo" || !/^easyscreenshot(kit)? /.test(String(old.tool || ""))) {
       throw new Error(`${dir} is not empty and holds no earlier easyscreenshotkit demo. Pick another folder with --out.`);
     }
   }
