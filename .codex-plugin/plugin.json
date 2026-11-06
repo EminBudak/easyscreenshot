@@ -1,6 +1,6 @@
 {
   "name": "easyscreenshotkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Give it a website and it picks the pages worth showing, then saves clean desktop, phone and full-page screenshots your coding agent can use. It can also record a short demo video of the site.",
   "author": {
     "name": "Emin Budak",

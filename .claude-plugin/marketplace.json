@@ -8,7 +8,7 @@
     {
       "name": "easyscreenshotkit",
       "description": "Opens a product's website in a headless browser, picks the pages worth showing (home, pricing, features and the like), hides cookie banners and chat bubbles, and saves desktop, phone and full-page PNGs with manifest.json and SCREENSHOTS.md. It also records a short demo video of the site (MP4 and GIF), as a tour or from steps you write, and takes the screenshots a web app manifest needs.",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "source": "./",
       "skills": ["./skills/easyscreenshotkit"],
       "author": {

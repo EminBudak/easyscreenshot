@@ -1,6 +1,6 @@
 {
   "name": "easyscreenshotkit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Give it a website and it picks the pages worth showing, hides the cookie banners and chat bubbles, and saves desktop, phone and full-page screenshots your agent can read. It also records a short demo video of the site and takes the screenshots a web app manifest needs.",
   "license": "MIT",
   "author": "Emin Budak",
